@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken'
-import { AuthRequest, authSingupInterface } from './auth.interface'
+import { AuthRequest, authSingupInterface, cookieOptions } from './auth.interface'
 import { NextFunction, Response } from 'express'
 
 
-const options = {
+const options: cookieOptions = {
     httpOnly: true,
     maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
     domain: process.env.CLIENT_DOMAIN,

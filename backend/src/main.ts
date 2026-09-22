@@ -11,6 +11,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { authControlller } from './auth/auth.controller'
 import { storeController } from './store/store.controller'
+import { servantController } from './servant/servant.controller'
 
 const app = express()
 
@@ -24,6 +25,7 @@ app.use(cors({
 
 app.use("/auth", authControlller)
 app.use("/storage", storeController)
+app.use("/servant", servantController)
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is Running on Port ${process.env.PORT}`)
