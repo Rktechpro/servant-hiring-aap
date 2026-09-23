@@ -1,17 +1,26 @@
 import { Request, Response, Router } from "express";
 import * as authService from './auth.service'
+import mongoose from "mongoose";
 
 export const authControlller = Router()
 
 authControlller.post("/signup", async (req: Request, res: Response) => {
+    const session = await mongoose.startSession()
     try {
         const body = req.body
-        const user = await authService.authSignup(body)
+        session.startTransaction()
+        const [user] = await authService.authSignup(body, session)
+
+        await session.commitTransaction()
         res.json(user)
-    } catch (err) {
+    }
+    catch (err) {
+        await session.abortTransaction();
         if (err instanceof Error)
             return res.status(500).json({ message: err.message })
-
+    }
+    finally {
+        await session.endSession()
     }
 })
 

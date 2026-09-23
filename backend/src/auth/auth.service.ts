@@ -3,8 +3,9 @@ import { LoginInput, SignupInput } from "./auth.dto";
 import { authModel } from "./auth.model";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { ClientSession } from "mongoose";
 
-export const authSignup = async (data: SignupInput) => {
+export const authSignup = async (data: SignupInput, session: ClientSession) => {
     const { email, mobile } = data;
 
     const existUser = await authModel.findOne({
@@ -21,7 +22,7 @@ export const authSignup = async (data: SignupInput) => {
         password: data.password,
         role: data.role
     }
-    const user = await authModel.create(payload)
+    const user = await authModel.create([payload], { session })
     return user
 }
 export const authLogin = async (data: LoginInput) => {
