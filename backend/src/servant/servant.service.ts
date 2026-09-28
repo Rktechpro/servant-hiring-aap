@@ -37,6 +37,7 @@ export const getServant = async () => {
 export const updateDataServant = async (userId: string, data: CreateServantInput, session: ClientSession) => {
     const existingServant = await Servant.findOne({
         userId,
+
     });
 
     if (!existingServant)
@@ -54,7 +55,10 @@ export const updateDataServant = async (userId: string, data: CreateServantInput
     const updateSeravant = await Servant.findOneAndUpdate(
         { userId: userId },
         { $set: [payload] },
-        { session },
+        {
+            session, returnDocument: "after",
+            runValidators: true,
+        },
 
     )
 
