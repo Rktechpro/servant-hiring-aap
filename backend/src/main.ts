@@ -13,6 +13,8 @@ import { authControlller } from './auth/auth.controller'
 import { storeController } from './store/store.controller'
 import { servantController } from './servant/servant.controller'
 import { customerController } from './customer/customer.controller'
+import { bookingController } from './booking/booking.controller'
+import { paymentController } from './payment/payment.controller'
 
 const app = express()
 
@@ -28,6 +30,8 @@ app.use("/auth", authControlller)
 app.use("/storage", storeController)
 app.use("/servant", servantController)
 app.use("/customer", customerController)
+app.use("/booking", bookingController)
+app.use("/payment", paymentController)
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is Running on Port ${process.env.PORT}`)
