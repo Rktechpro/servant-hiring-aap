@@ -1,0 +1,61 @@
+{
+  "entity": "event",
+  "account_id": "acc_PnB3bfcCBnRybx",
+  "event": "payment.captured",
+  "contains": [
+    "payment"
+  ],
+  "payload": {
+    "payment": {
+      "entity": {
+        "id": "pay_TqXUyUek0cklgD",
+        "entity": "payment",
+        "amount": 75000,
+        "currency": "INR",
+        "status": "captured",
+        "order_id": "order_TqXTyDIUz0G9wy",
+        "invoice_id": null,
+        "international": false,
+        "method": "card",
+        "amount_refunded": 0,
+        "refund_status": null,
+        "captured": true,
+        "description": "Booking payment",
+        "card_id": "card_TqXUyk9AMoYsa4",
+        "card": {
+          "id": "card_TqXUyk9AMoYsa4",
+          "entity": "card",
+          "name": "",
+          "last4": "1007",
+          "network": "Visa",
+          "type": "debit",
+          "issuer": "DCBL",
+          "international": false,
+          "emi": false,
+          "sub_type": "consumer",
+          "token_iin": "410028000"
+        },
+        "bank": null,
+        "wallet": null,
+        "vpa": null,
+        "email": "ravikumar90949@gmail.com",
+        "contact": "+917088839745",
+        "notes": [],
+        "fee": 1500,
+        "tax": 0,
+        "error_code": null,
+        "error_description": null,
+        "error_source": null,
+        "error_step": null,
+        "error_reason": null,
+        "acquirer_data": {
+          "auth_code": "918468"
+        },
+        "created_at": 1792581569,
+        "reward": null,
+        "base_amount": 75000
+      }
+    }
+  },
+  "created_at": 1792581574
+}

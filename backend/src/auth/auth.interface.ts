@@ -16,7 +16,6 @@ export interface AuthRequest extends Request {
     user?: authSingupInterface
 }
 
-
 export interface cookieOptions {
     httpOnly: boolean;
     maxAge: number;

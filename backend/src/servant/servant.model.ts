@@ -47,8 +47,23 @@ const servantSchema = new Schema<servantInterface>(
 
         isActive: {
             type: Boolean,
-            default: true,
+            default: true
         },
+
+        embeddingText: {
+            type: String,
+            default: "",
+        },
+        embedding: {
+            type: [Number],
+            default: [],
+            select: false,
+        },
+        embeddingModel: {
+            type: String,
+            default: "",
+        },
+
     },
     {
         timestamps: true,

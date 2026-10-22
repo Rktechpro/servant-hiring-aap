@@ -1,9 +1,14 @@
+import dotenv from "dotenv"
+dotenv.config();
 import crypto from "crypto"
 import Razorpay from "razorpay";
 import { Booking } from "../booking/booking.model";
 import { Customer } from "../customer/customer.model";
 import { Payment } from "./payment.model";
 import { PaymentStatus } from "./payment.enum";
+import fs from 'fs'
+import path from 'path'
+
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
@@ -11,12 +16,12 @@ const razorpay = new Razorpay({
 });
 
 export const createPaymentOrder = async (customerUserId: string, bookingId: string) => {
-    const customer = await Customer.findOne({ userId: customerUserId });
+    const customer = await Customer.findOne({ userId: customerUserId })
 
     if (!customer)
         throw new Error("Customer profile not found");
 
-    const booking = await Booking.findOne({ _id: bookingId, customerId: customer._id });
+    const booking = await Booking.findOne({ _id: bookingId, customerId: customerUserId });
 
     if (!booking)
         throw new Error("Booking not found");
@@ -29,170 +34,132 @@ export const createPaymentOrder = async (customerUserId: string, bookingId: stri
     if (existingPayment?.status === PaymentStatus.PAID)
         throw new Error("Booking is already paid");
 
-
     const amount = Math.round(booking.totalAmount * 100);
 
     const order = await razorpay.orders.create({
         amount,
-        currency: "INR",
-        receipt: `Rec_${booking._id}`,
+        currency: process.env.CURRENCY!,
+        receipt: `rec_${booking._id}`,
     });
 
     await Payment.findOneAndUpdate(
-        {
-            bookingId: booking._id,
-        },
+        { bookingId: booking._id },
         {
             $set: {
                 bookingId: booking._id,
                 customerId: customer._id,
                 amount: booking.totalAmount,
-                currency: "INR",
+                currency: process.env.CURRENCY!,
                 razorpayOrderId: order.id,
                 status: PaymentStatus.PENDING,
             },
         },
+
         {
             upsert: true,
-            returnDocument: "after",
+            new: true,
             runValidators: true,
         }
+
     );
 
     return {
         bookingId: booking._id,
         razorpayOrderId: order.id,
         amount,
-        currency: "INR",
+        currency: process.env.CURRENCY!,
         keyId: process.env.RAZORPAY_KEY_ID,
     };
 };
 
-export const handleRazorpayWebhook = async (
-    rawBody: Buffer,
-    signature: string
-) => {
+
+export const razorpayWebhook = async (data: string, signature: any) => {
+    console.log("🔥 Razorpay webhook service called");
+
+    // 1. Verify Razorpay webhook signature
     const expectedSignature = crypto
-        .createHmac(
-            "sha256",
-            process.env.RAZORPAY_WEBHOOK_SECRET!
-        )
-        .update(rawBody)
+        .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET!)
+        .update(data, "utf8")
         .digest("hex");
 
-    if (
-        !crypto.timingSafeEqual(
-            Buffer.from(expectedSignature),
-            Buffer.from(signature)
-        )
-    ) {
-        throw new Error("Invalid Razorpay webhook signature");
-    }
+    if (signature !== expectedSignature)
+        throw new Error("Invalid request")
 
-    const event = JSON.parse(rawBody.toString());
 
-    console.log("Razorpay Event:", event.event);
+    console.log("✅ Webhook signature verified");
 
-    // Payment captured / order paid
-    if (
-        event.event === "payment.captured" ||
-        event.event === "order.paid"
-    ) {
-        const paymentEntity =
-            event.payload?.payment?.entity;
+    // 2. Parse and save verified payload
+    const body = JSON.parse(data);
 
-        const orderEntity =
-            event.payload?.order?.entity;
+    const filePath = path.resolve(process.cwd(), "payment.json");
 
-        const razorpayOrderId =
-            paymentEntity?.order_id ||
-            orderEntity?.id;
+    fs.writeFileSync(
+        filePath,
+        JSON.stringify(body, null, 2),
+        "utf8"
+    );
 
-        const razorpayPaymentId =
-            paymentEntity?.id;
+    // 4. Update database status
+    const paymentEntity = body.payload?.payment?.entity;
+    const orderId = paymentEntity?.order_id;
 
-        if (!razorpayOrderId) {
-            throw new Error(
-                "Razorpay order ID not found"
-            );
+    if (body.event === "payment.captured") {
+        if (!orderId || !paymentEntity?.id || paymentEntity.status !== "captured" ||
+            paymentEntity.captured !== true
+        ) {
+            throw new Error("Payment is not confirmed as captured");
         }
 
-        const payment = await Payment.findOne({
-            razorpayOrderId,
-        });
-
-        if (!payment) {
-            throw new Error(
-                "Payment record not found"
-            );
-        }
-
-        // Idempotency
-        if (payment.status === PaymentStatus.PAID) {
-            return {
-                success: true,
-                message: "Payment already processed",
-            };
-        }
-
-        await Payment.findByIdAndUpdate(
-            payment._id,
+        const payment = await Payment.findOneAndUpdate({ razorpayOrderId: orderId },
             {
                 $set: {
-                    razorpayPaymentId,
                     status: PaymentStatus.PAID,
+                    razorpayPaymentId: paymentEntity.id,
                 },
             },
-            {
-                returnDocument: "after",
-            }
         );
 
-        // Optional: update booking
-        await Booking.findByIdAndUpdate(
-            payment.bookingId,
+        if (!payment)
+            throw new Error(`Payment record not found for order: ${orderId}`);
+
+        console.log("✅ Payment updated:", {
+            id: payment._id,
+            orderId: payment.razorpayOrderId,
+            paymentId: payment.razorpayPaymentId,
+            status: payment.status,
+        });
+
+    }
+    else if (body.event === "payment.failed") {
+        if (!orderId || !paymentEntity?.id)
+            throw new Error("Failed payment details missing");
+
+        const payment = await Payment.findOneAndUpdate(
+            {
+                razorpayOrderId: orderId,
+                status: { $ne: PaymentStatus.PAID },
+            },
             {
                 $set: {
-                    paymentStatus: "PAID",
+                    status: PaymentStatus.FAILED,
+                    razorpayPaymentId: paymentEntity.id,
                 },
-            }
+            },
         );
 
-        return {
-            success: true,
-            message: "Payment marked as paid",
-        };
+        console.log("Failed payment update:", {
+            orderId,
+            paymentId: paymentEntity.id,
+            status: payment?.status ?? "No eligible record found",
+        });
+
+    } else if (body.event === "payment.authorized") {
+        console.log("⏳ Payment authorized; waiting for capture");
+    }
+    else {
+        console.log("No status update for event:", body.event);
     }
 
-    // Payment failed
-    if (event.event === "payment.failed") {
-        const paymentEntity =
-            event.payload?.payment?.entity;
-
-        const razorpayOrderId =
-            paymentEntity?.order_id;
-
-        if (razorpayOrderId) {
-            await Payment.findOneAndUpdate(
-                {
-                    razorpayOrderId,
-                },
-                {
-                    $set: {
-                        status: PaymentStatus.FAILED,
-                    },
-                }
-            );
-        }
-
-        return {
-            success: true,
-            message: "Payment marked as failed",
-        };
-    }
-
-    return {
-        success: true,
-        message: "Webhook received",
-    };
+    return body;
 };
+

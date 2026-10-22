@@ -36,12 +36,12 @@ const paymentSchema = new Schema<paymentInterface>(
 
         razorpayPaymentId: {
             type: String,
-            default: null,
+
         },
 
         razorpaySignature: {
             type: String,
-            default: null,
+
         },
 
         status: {

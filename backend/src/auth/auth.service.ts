@@ -1,4 +1,3 @@
-import id from "zod/v4/locales/id.js";
 import { LoginInput, SignupInput } from "./auth.dto";
 import { authModel } from "./auth.model";
 import bcrypt from 'bcrypt'
@@ -43,7 +42,7 @@ export const authLogin = async (data: LoginInput) => {
         role: user.role
     }
 
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '1h' })
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '1d' })
     const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET!, { expiresIn: '7d' })
 
     return {
@@ -56,5 +55,16 @@ export const authLogin = async (data: LoginInput) => {
             mobile: user.mobile,
             role: user.role
         }
+    }
+}
+
+export const logout = async () => {
+    try {
+
+        return {
+            message: "Logout successful",
+        };
+    } catch (error) {
+        throw error;
     }
 }

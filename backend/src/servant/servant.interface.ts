@@ -9,6 +9,9 @@ export interface servantInterface extends Document {
     hourlyPrice: number;
     availability: boolean;
     isActive: boolean;
+    embeddingText?: string;
+    embedding?: number[];
+    embeddingModel?: string;
     createdAt: Date;
     updatedAt: Date;
 }

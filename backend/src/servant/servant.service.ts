@@ -1,11 +1,11 @@
+import path from 'path'
+import fs from 'fs/promises'
 import { ClientSession } from "mongoose";
 import { CreateServantInput } from "./servant.dto";
 import { Servant } from "./servant.model";
 
 export const createServant = async (userId: string, data: CreateServantInput, session: ClientSession) => {
-    const existingServant = await Servant.findOne({
-        userId,
-    });
+    const existingServant = await Servant.findOne({ userId });
 
     if (existingServant)
         throw new Error("Servant profile already exists");
@@ -26,10 +26,13 @@ export const createServant = async (userId: string, data: CreateServantInput, se
 }
 
 export const getServant = async () => {
-    const servant = await Servant.find({ isActive: true }).populate({ path: "userId", select: "fullname email mobile role", }).sort({ createdAt: -1 })
+    const servant = await Servant.find({ isActive: true })
+        .populate({ path: "userId", select: "fullname email mobile role", })
+        .sort({ createdAt: -1 })
 
-    if (servant.length === 0)
-        throw new Error("No servant profile found")
+    if (!servant) {
+        return null
+    }
 
     return servant
 }
@@ -77,3 +80,47 @@ export const deleteDataServant = async (userId: string, session: ClientSession) 
 
     return deletedProfile;
 };
+
+// export const ServantImageProfile = async (userId: string, path: string) => {
+//     try {
+//         const url = `${process.env.S3_URL}/${path}`
+//         const customers = await Servant.findOne({ userId });
+
+//         if (!customers)
+//             throw new Error("Servant profile not found");
+
+
+//         const updatepath = await Servant.updateOne({ userId }, { $set: { image: url } })
+//         return updatepath
+//     } catch (err) {
+//         throw err
+//     }
+// }
+
+export const ServantImageProfile = async (userId: string, file: Express.Multer.File, session: ClientSession) => {
+
+    const servants = await Servant.findOne({ userId })
+
+    if (!servants)
+        throw new Error("Servant profile not found");
+
+    const imageUrl = `/uploads/Servant/${file.filename}`;
+    const oldImage = servants.image;
+
+    servants.image = imageUrl;
+    await servants.save({ session });
+
+    if (oldImage?.startsWith('/uploads/Servant/')) {
+        const oldPath = path.join(process.cwd(),
+            oldImage.replace(/^\/+/, "")
+        );
+
+        if (oldPath !== file.path) {
+            await fs.unlink(oldPath).catch(() => { })
+        }
+
+        return {
+            image: servants.image
+        }
+    }
+}

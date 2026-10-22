@@ -26,18 +26,24 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
 
 
     } catch (err) {
+        res.clearCookie("accessToken", options);
+
         if (err instanceof jwt.TokenExpiredError) {
-            res.clearCookie("accessToken", options)
             return res.status(401).json({
-                success: false, message: "Access token expired",
+                success: false,
+                message: "Access token expired",
             });
         }
-        res.clearCookie("accessToken", options)
 
-        if (err instanceof jwt.JsonWebTokenError)
+        if (err instanceof jwt.JsonWebTokenError) {
             return res.status(401).json({
-                success: false, message: "Invalid token",
-            })
+                success: false,
+                message: "Invalid token",
+            });
+        }
 
+        return res.status(500).json({
+            message: "Internal server error",
+        });
     }
 }

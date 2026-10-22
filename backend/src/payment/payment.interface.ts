@@ -1,7 +1,7 @@
 import { Document, Types } from "mongoose";
 import { PaymentStatus } from "./payment.enum";
 
-export interface IPayment extends Document {
+export interface paymentInterface extends Document {
     bookingId: Types.ObjectId;
     customerId: Types.ObjectId;
     amount: number;

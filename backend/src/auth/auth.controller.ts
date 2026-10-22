@@ -61,3 +61,26 @@ authControlller.post("/login", async (req: Request, res: Response) => {
             return res.status(500).json({ message: err.message })
     }
 })
+
+authControlller.post("/logout", async (req: Request, res: Response) => {
+    try {
+        const signOut = await authService.logout()
+        const cookieOption = {
+            httpOnly: true,
+            maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
+            secure: process.env.NODE_ENV === "dev" ? false : true,
+            sameSite: 'lax' as const
+        }
+        res.clearCookie("accessToken", cookieOption)
+        res.clearCookie("refreshToken", cookieOption)
+
+        res.status(201).json({
+            message: signOut.message
+        })
+
+    } catch (err) {
+        if (err instanceof Error)
+            return res.status(500).json({ message: err.message })
+    }
+})
+
