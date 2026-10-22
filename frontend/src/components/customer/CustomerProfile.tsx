@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import useSWR from "swr";
 import {
-  EditOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  EnvironmentOutlined,
-  HomeOutlined,
-  CameraOutlined,
-  CheckCircleFilled,
-} from "@ant-design/icons";
+  Mail,
+  Phone,
+  MapPin,
+  Camera,
+  CheckCircle,
+  Edit,
+  Home,
+} from "lucide-react";
 import { Avatar, Button, Card, Skeleton, message } from "antd";
+import type { ChangeEvent } from "react";
 
 import { httpsRequest } from "../../lib/http";
 import { useAuthStore } from "../store/auth.store";
@@ -27,8 +28,9 @@ interface CustomerFormData {
 const CustomerProfile = () => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuthStore();
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuthStore();
   const {
     data: response,
     isLoading,
@@ -36,18 +38,54 @@ const CustomerProfile = () => {
     mutate,
   } = useSWR("/customer", fetchUrl);
 
-  console.log("Customer API Response:", response);
-
   const handleSubmit = async (values: CustomerFormData) => {
     try {
       setLoading(true);
       await httpsRequest.put("/customer/updateCustomer", values);
       message.success("Customer profile updated successfully");
-      await mutate("/customer");
+      setOpen(false);
+      await mutate();
     } catch (error: any) {
       message.error(error?.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      message.error("Please select a valid image");
+      event.target.value = "";
+      return;
+    }
+
+    // restrict image size to 5 MB
+    if (file.size > 5 * 1024 * 1024) {
+      message.error("Image size must be less than 5 MB");
+      event.target.value = "";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      setLoading(true);
+      await httpsRequest.put("/servant/imageServantProfile", formData);
+      message.success("Profile image updated successfully");
+      await mutate();
+    } catch (error: any) {
+      message.error(
+        error?.response?.data?.message || "Failed to update profile image",
+      );
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Reset the file input
+      }
     }
   };
 
@@ -65,7 +103,8 @@ const CustomerProfile = () => {
     );
   }
 
-  if (!response || !response.data) {
+  const customer = response.data;
+  if (!customer) {
     return <Createprofile />;
   }
 
@@ -73,15 +112,20 @@ const CustomerProfile = () => {
     <div className="mx-auto max-w-7xl space-y-6">
       <Card className="overflow-hidden rounded-3xl! border-0! shadow-sm">
         <div className="h-44 bg-linear-to-r from-indigo-600 via-violet-600 to-purple-600" />
+
         <div className="px-6 pb-6 sm:px-8">
           <div className="-mt-16 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-end gap-5">
               <div className="relative">
                 <Avatar
                   size={120}
-                  src={response?.image || undefined}
+                  src={
+                    customer.image
+                      ? `${import.meta.env.VITE_API_URL?.replace(/\/$/, "")}${customer.image}`
+                      : undefined
+                  }
                   icon={
-                    !response?.image && (
+                    !customer.image && (
                       <span className="text-3xl">
                         {user?.fullname?.charAt(0).toUpperCase()}
                       </span>
@@ -89,42 +133,51 @@ const CustomerProfile = () => {
                   }
                   className="border-4! border-white! bg-indigo-100! text-indigo-600! shadow-md"
                 />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
 
                 <button
                   type="button"
-                  className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-100"
+                  disabled={loading}
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Update profile image"
+                  className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-100 disabled:opacity-50"
                 >
-                  <CameraOutlined />
+                  <Camera />
                 </button>
               </div>
 
               <div className="pb-1">
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-bold capitalize text-slate-800">
-                    {response.data?.fullname || user?.fullname}
+                    {customer.userId?.fullname || user?.fullname}
                   </h1>
 
-                  <CheckCircleFilled className="text-green-600!" />
+                  <CheckCircle className="text-green-600!" />
                 </div>
 
                 <p className="mt-1 text-base text-slate-500">Customer</p>
 
                 <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
-                  <EnvironmentOutlined />
-
-                  {response.data?.location || "Location not provided"}
+                  <MapPin />
+                  {customer.location || "Location not provided"}
                 </p>
               </div>
             </div>
 
             <Button
               type="primary"
-              icon={<EditOutlined />}
+              icon={<Edit />}
               size="large"
               className="rounded-xl!"
               onClick={() => setOpen(true)}
             >
-              {response ? "Edit Profile" : "Create Profile"}
+              Edit Profile
             </Button>
           </div>
         </div>
@@ -134,11 +187,11 @@ const CustomerProfile = () => {
         <div className="space-y-6! lg:col-span-2">
           <Card
             title={<span className="text-lg font-semibold">About Me</span>}
-            className="rounded-2xl! border-0! shadow-sm my-4!"
+            className="my-4! rounded-2xl! border-0! shadow-sm"
           >
             <p className="leading-7 text-slate-600">
-              {response.data?.address
-                ? `Customer located in ${response.data?.location || "your area"}.`
+              {customer.address
+                ? `Customer located in ${customer.location || "your area"}.`
                 : "No customer profile information added yet."}
             </p>
           </Card>
@@ -152,14 +205,13 @@ const CustomerProfile = () => {
             <div className="rounded-xl bg-slate-50 p-5">
               <div className="flex gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <HomeOutlined />
+                  <Home />
                 </div>
 
                 <div>
                   <p className="text-xs text-slate-400">Full Address</p>
-
                   <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                    {response.data?.address || "Address not provided"}
+                    {customer.address || "Address not provided"}
                   </p>
                 </div>
               </div>
@@ -172,69 +224,78 @@ const CustomerProfile = () => {
             title={
               <span className="text-lg font-semibold">Contact Information</span>
             }
-            className="rounded-2xl! border-0! shadow-sm my-4!"
+            className="my-4! rounded-2xl! border-0! shadow-sm"
           >
             <div className="space-y-5">
               <div className="flex gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <MailOutlined />
+                  <Mail />
                 </div>
+
                 <div>
                   <p className="text-xs text-slate-400">Email</p>
                   <p className="mt-1 text-sm font-medium text-slate-700">
-                    {response.userId?.email ||
+                    {customer.userId?.email ||
                       user?.email ||
                       "Email not provided"}
                   </p>
                 </div>
               </div>
+
               <div className="flex gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <PhoneOutlined />
+                  <Phone />
                 </div>
+
                 <div>
                   <p className="text-xs text-slate-400">Phone</p>
                   <p className="mt-1 text-sm font-medium text-slate-700">
-                    {response.data.userId?.mobile || "Phone not provided"}
+                    {customer.userId?.mobile || "Phone not provided"}
                   </p>
                 </div>
               </div>
+
               <div className="flex gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <EnvironmentOutlined />
+                  <MapPin />
                 </div>
+
                 <div>
                   <p className="text-xs text-slate-400">Location</p>
                   <p className="mt-1 text-sm font-medium text-slate-700">
-                    {response.data?.location || "Not Provided"}
+                    {customer.location || "Not provided"}
                   </p>
                 </div>
               </div>
             </div>
           </Card>
-          <Card className="rounded-2xl! border-0! bg-linear-to-br from-indigo-600 to-violet-600! shadow-sm">
+
+          <Card className="my-4! rounded-2xl! border-0! bg-linear-to-br from-indigo-600 to-violet-600! shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white">
-                <CheckCircleFilled />
+                <CheckCircle />
               </div>
+
               <div>
                 <p className="font-semibold text-white">Customer Profile</p>
 
                 <p className="text-xs text-indigo-100">
-                  {moment(response.data?.createdAt).format("MMMM Do YYYY") ||
-                    "Date not available"}
+                  {customer.createdAt
+                    ? moment(customer.createdAt).format("MMMM Do YYYY")
+                    : "Date not available"}
                 </p>
               </div>
             </div>
           </Card>
         </div>
+
         <CustomerProfileModal
           open={open}
           loading={loading}
           onCancel={() => setOpen(false)}
           onSubmit={handleSubmit}
-          initialValues={response?.data}
-          mode={response ? "edit" : "create"}
+          initialValues={customer}
+          mode="edit"
         />
       </div>
     </div>

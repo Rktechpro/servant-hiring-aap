@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
+import { Skeleton } from "antd";
 
 export const ProtectedRoute = () => {
   const user = useAuthStore((state) => state.user);
@@ -10,7 +11,7 @@ export const ProtectedRoute = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        Loading...
+        <Skeleton />
       </div>
     );
   }

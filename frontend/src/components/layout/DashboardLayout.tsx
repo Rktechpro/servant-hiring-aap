@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Layout } from "antd";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
 
 const { Content } = Layout;
 
@@ -10,17 +11,15 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ role }: DashboardLayoutProps) => {
+  const [collapsed, setCollapsed] = useState(true);
+
   return (
     <Layout className="min-h-screen bg-gray-100">
-      <Sidebar role={role} />
-
-      <Layout>
-        <Navbar />
-
-        <Content className="p-4 md:p-6">
-          <div className="min-h-[calc(100vh-100px)]">
-            <Outlet />
-          </div>
+      <Sidebar role={role} collapsed={collapsed} setCollapsed={setCollapsed} />
+      <Layout className="min-w-0">
+        <Navbar setCollapsed={setCollapsed} />
+        <Content className="min-w-0 bg-gray-50 p-4 md:p-6">
+          <Outlet />
         </Content>
       </Layout>
     </Layout>

@@ -1,4 +1,6 @@
-import { Card, Tag } from "antd";
+import { Card, Tag, Spin, Alert, Empty } from "antd";
+import useSWR from "swr";
+import { fetchUrl } from "../../lib/fetch";
 
 interface Booking {
   _id: string;
@@ -21,181 +23,125 @@ interface Booking {
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "COMPLETED";
 }
 
-const dummyBookings: Booking[] = [
-  {
-    _id: "booking001",
-    servantId: {
-      _id: "servant001",
-      userId: {
-        fullname: "Rahul Kumar",
-        email: "rahul@gmail.com",
-        mobile: "+919876543210",
-      },
-    },
-    bookingDate: "2026-10-05",
-    startTime: "10:00",
-    endTime: "14:00",
-    hours: 4,
-    hourlyPrice: 300,
-    totalAmount: 1200,
-    location: "Delhi",
-    address: "Sector 15, Rohini, Delhi",
-    status: "PENDING",
-  },
-
-  {
-    _id: "booking002",
-    servantId: {
-      _id: "servant002",
-      userId: {
-        fullname: "Amit Singh",
-        email: "amit@gmail.com",
-        mobile: "+919812345678",
-      },
-    },
-    bookingDate: "2026-10-08",
-    startTime: "09:00",
-    endTime: "13:00",
-    hours: 4,
-    hourlyPrice: 250,
-    totalAmount: 1000,
-    location: "Faridabad",
-    address: "Sector 21, Faridabad, Haryana",
-    status: "ACCEPTED",
-  },
-
-  {
-    _id: "booking003",
-    servantId: {
-      _id: "servant003",
-      userId: {
-        fullname: "Vikas Sharma",
-        email: "vikas@gmail.com",
-        mobile: "+919998887777",
-      },
-    },
-    bookingDate: "2026-10-10",
-    startTime: "11:00",
-    endTime: "15:00",
-    hours: 4,
-    hourlyPrice: 350,
-    totalAmount: 1400,
-    location: "Noida",
-    address: "Sector 62, Noida, UP",
-    status: "COMPLETED",
-  },
-];
-
 const CustomerBooking = () => {
+  const { data, error, isLoading } = useSWR<Booking | any>(
+    "/booking/my-bookings",
+    fetchUrl,
+  );
+
+  const booking = data?.data;
+  console.log(booking);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-10">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert
+        type="error"
+        title="Failed to load bookings"
+        description="Please try again later."
+        showIcon
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">My Bookings</h1>
-
         <p className="text-sm text-slate-500">View all your servant bookings</p>
       </div>
 
-      {dummyBookings.map((booking) => (
-        <Card
-          key={booking._id}
-          className="rounded-2xl! border-0! shadow-sm my-4!"
-        >
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            {/* Servant */}
-            <div>
-              <p className="text-xs text-slate-400">Servant</p>
+      {booking.length === 0 ? (
+        <Empty description="No bookings found" />
+      ) : (
+        booking.map((item: any, index: number) => (
+          <Card key={index} className="my-4! rounded-2xl! border-0! shadow-sm">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div>
+                <p className="text-xs text-slate-400">Servant</p>
+                <h2 className="text-lg font-semibold text-slate-800 capitalize">
+                  {item.servant?.fullname || "Name unavailable"}
+                </h2>
+                <p className="text-sm text-slate-500 capitalize">
+                  {item.servant?.mobile || "Mobile unavailable"}
+                </p>
+              </div>
 
-              <h2 className="text-lg font-semibold text-slate-800">
-                {booking.servantId.userId.fullname}
-              </h2>
+              <div className="md:text-right">
+                <Tag
+                  color={
+                    item.status === "ACCEPTED"
+                      ? "green"
+                      : item.status === "COMPLETED"
+                        ? "blue"
+                        : item.status === "REJECTED"
+                          ? "red"
+                          : item.status === "CANCELLED"
+                            ? "default"
+                            : "orange"
+                  }
+                >
+                  {item.status}
+                </Tag>
+              </div>
 
-              <p className="text-sm text-slate-500">
-                {booking.servantId.userId.mobile}
-              </p>
-            </div>
+              <div>
+                <p className="text-xs text-slate-400">Booking Date</p>
+                <p className="font-medium text-slate-700">
+                  {new Date(item.bookingDate).toLocaleDateString("en-IN")}
+                </p>
+              </div>
 
-            {/* Status */}
-            <div className="md:text-right">
-              <Tag
-                color={
-                  booking.status === "ACCEPTED"
-                    ? "green"
-                    : booking.status === "COMPLETED"
-                      ? "blue"
-                      : booking.status === "REJECTED"
-                        ? "red"
-                        : booking.status === "CANCELLED"
-                          ? "default"
-                          : "orange"
-                }
-              >
-                {booking.status}
-              </Tag>
-            </div>
+              <div>
+                <p className="text-xs text-slate-400">Time</p>
+                <p className="font-medium text-slate-700">
+                  {item.startTime} - {item.endTime}
+                </p>
+              </div>
 
-            {/* Date */}
-            <div>
-              <p className="text-xs text-slate-400">Booking Date</p>
+              <div>
+                <p className="text-xs text-slate-400">Duration</p>
+                <p className="font-medium text-slate-700">{item.hours} hours</p>
+              </div>
 
-              <p className="font-medium text-slate-700">
-                {new Date(booking.bookingDate).toLocaleDateString("en-IN")}
-              </p>
-            </div>
+              <div>
+                <p className="text-xs text-slate-400">Hourly Price</p>
+                <p className="font-medium text-slate-700">
+                  ₹{item.hourlyPrice}/hour
+                </p>
+              </div>
 
-            {/* Time */}
-            <div>
-              <p className="text-xs text-slate-400">Time</p>
+              <div>
+                <p className="text-xs text-slate-400">Location</p>
+                <p className="font-medium text-slate-700">{item.location}</p>
+              </div>
 
-              <p className="font-medium text-slate-700">
-                {booking.startTime} - {booking.endTime}
-              </p>
-            </div>
+              <div>
+                <p className="text-xs text-slate-400">Address</p>
+                <p className="font-medium text-slate-700">{item.address}</p>
+              </div>
 
-            {/* Hours */}
-            <div>
-              <p className="text-xs text-slate-400">Duration</p>
-
-              <p className="font-medium text-slate-700">
-                {booking.hours} hours
-              </p>
-            </div>
-
-            {/* Hourly Price */}
-            <div>
-              <p className="text-xs text-slate-400">Hourly Price</p>
-
-              <p className="font-medium text-slate-700">
-                ₹{booking.hourlyPrice}/hour
-              </p>
-            </div>
-
-            {/* Location */}
-            <div>
-              <p className="text-xs text-slate-400">Location</p>
-
-              <p className="font-medium text-slate-700">{booking.location}</p>
-            </div>
-
-            {/* Address */}
-            <div>
-              <p className="text-xs text-slate-400">Address</p>
-
-              <p className="font-medium text-slate-700">{booking.address}</p>
-            </div>
-
-            {/* Total */}
-            <div className="border-t pt-4 md:col-span-2">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-slate-500">Total Amount</span>
-
-                <span className="text-2xl font-bold text-indigo-600">
-                  ₹{booking.totalAmount}
-                </span>
+              <div className="border-t pt-4 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-slate-500">
+                    Total Amount
+                  </span>
+                  <span className="text-2xl font-bold text-indigo-600">
+                    ₹{item.totalAmount}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        ))
+      )}
     </div>
   );
 };

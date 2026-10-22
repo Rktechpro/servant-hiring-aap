@@ -1,14 +1,5 @@
-import {
-  Home,
-  CalendarDays,
-  DollarSign,
-  User,
-  Search,
-  LogOut,
-  LayoutDashboard,
-} from "lucide-react";
-
-import { Layout, Menu, Modal } from "antd";
+import { Home, CalendarDays, DollarSign, User } from "lucide-react";
+import { Layout, Menu, Drawer } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
 
@@ -16,94 +7,65 @@ const { Sider } = Layout;
 
 interface SidebarProps {
   role: "CUSTOMER" | "SERVANT";
+  collapsed: boolean;
+  setCollapsed: (value: boolean) => void;
 }
 
-const Sidebar = ({ role }: SidebarProps) => {
+const Sidebar = ({ role, collapsed, setCollapsed }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
 
-  const handleLogout = () => {
-    Modal.confirm({
-      title: "Logout",
-      content: "Are you sure you want to logout?",
-      okText: "Logout",
-      cancelText: "Cancel",
+  const items =
+    role === "SERVANT"
+      ? [
+          {
+            key: "/dashboard-servant",
+            icon: <Home size={18} />,
+            label: "Dashboard",
+          },
+          {
+            key: "/servant/profile",
+            icon: <User size={18} />,
+            label: "My Profile",
+          },
+          {
+            key: "/servant/earnings",
+            icon: <DollarSign size={18} />,
+            label: "Earnings",
+          },
+        ]
+      : [
+          {
+            key: "/dashboard-customer",
+            icon: <Home size={18} />,
+            label: "Dashboard",
+          },
 
-      onOk: async () => {
-        await logout();
-        navigate("/auth/login", { replace: true });
-      },
-    });
-  };
+          {
+            key: "/customer/bookings",
+            icon: <CalendarDays size={18} />,
+            label: "My Bookings",
+          },
+          {
+            key: "/customer/profile",
+            icon: <User size={18} />,
+            label: "My Profile",
+          },
+        ];
 
-  const servantItems = [
-    {
-      key: "/dashboard-servant",
-      icon: <Home />,
-      label: "Dashboard",
-    },
-    {
-      key: "/servant/profile",
-      icon: <User />,
-      label: "My Profile",
-    },
-    {
-      key: "/servant/booking-requests",
-      icon: <CalendarDays />,
-      label: "Booking Requests",
-    },
-    {
-      key: "/servant/earnings",
-      icon: <DollarSign />,
-      label: "Earnings",
-    },
-  ];
-
-  const customerItems = [
-    {
-      key: "/dashboard-customer",
-      icon: <Home />,
-      label: "Dashboard",
-    },
-    {
-      key: "/customer/servants",
-      icon: <Search />,
-      label: "Find Servants",
-    },
-    {
-      key: "/customer/bookings",
-      icon: <CalendarDays />,
-      label: "My Bookings",
-    },
-    {
-      key: "/customer/profile",
-      icon: <User />,
-      label: "My Profile",
-    },
-  ];
-
-  const items = role === "SERVANT" ? servantItems : customerItems;
-
-  return (
-    <Sider breakpoint="lg" collapsedWidth="0" className="!bg-white shadow-lg">
-      {/* Logo */}
-      <div className="flex h-16 items-center justify-center border-b">
-        <h1 className="text-xl font-bold text-indigo-600">ServantHub</h1>
-      </div>
-
-      {/* User */}
+  const sidebarContent = (
+    <>
       <div className="border-b px-4 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
-            <User className="text-indigo-600" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100">
+            <User size={20} className="text-indigo-600" />
           </div>
 
           <div className="min-w-0">
-            <p className="truncate font-semibold">{user?.fullname}</p>
-
+            <p className="truncate font-semibold capitalize">
+              {user?.fullname}
+            </p>
             <p className="text-xs text-gray-500">{role}</p>
           </div>
         </div>
@@ -113,21 +75,38 @@ const Sidebar = ({ role }: SidebarProps) => {
         mode="inline"
         selectedKeys={[location.pathname]}
         items={items}
-        onClick={({ key }) => navigate(key)}
-        className="!border-none !mt-4"
+        onClick={({ key }) => {
+          navigate(key);
+          setCollapsed(true);
+        }}
+        className="mt-4! border-none!"
       />
+    </>
+  );
 
-      {/* Logout */}
-      <div className="absolute bottom-0 w-full border-t bg-white">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-6 py-4 text-left text-red-500 hover:bg-red-50"
-        >
-          <LogOut />
-          Logout
-        </button>
+  return (
+    <>
+      <div className="hidden lg:block">
+        <Sider width={250} theme="light" className=" bg-white h-full!">
+          {sidebarContent}
+        </Sider>
       </div>
-    </Sider>
+
+      <div className="lg:hidden">
+        <Drawer
+          placement="left"
+          open={!collapsed}
+          onClose={() => setCollapsed(true)}
+          closable={false}
+          size={250}
+          styles={{
+            body: { padding: 0 },
+          }}
+        >
+          {sidebarContent}
+        </Drawer>
+      </div>
+    </>
   );
 };
 
