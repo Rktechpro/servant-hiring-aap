@@ -25,12 +25,11 @@ interface SignupForm {
 export const Signup = () => {
   const router = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<SignupForm | null>(null);
+  
 
   const handleSignup = async (values: SignupForm) => {
     try {
-      const respose = await httpsRequest.post("/auth/signup", values);
-      setForm(respose.data);
+      await httpsRequest.post("/auth/signup", values);
       router("/auth/login");
     } catch (err) {
       catchError(err);
