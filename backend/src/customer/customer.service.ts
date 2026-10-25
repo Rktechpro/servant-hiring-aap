@@ -13,8 +13,8 @@ export const createCustomer = async (userId: string, data: createCustomerDto, se
     const payload = {
         userId,
         image: data.image,
-        address: data.address,
-        location: data.location,
+        address: data.addressCustomer,
+        location: data.locationCustomer,
     }
 
     const customers = await Customer.create([payload], { session })
@@ -41,8 +41,8 @@ export const updateCustomer = async (
 ) => {
     const payload = {
         image: data.image,
-        address: data.address,
-        location: data.location,
+        addressCustomer: data.addressCustomer,
+        locationCustomer: data.locationCustomer,
     };
 
     const customer = await Customer.findOneAndUpdate(

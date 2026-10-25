@@ -14,9 +14,13 @@ export const createServantSchema = z.object({
         .array(z.string())
         .optional(),
 
-    location: z
+     servantlocation: z
         .string()
         .min(2, "Location is required"),
+
+   servantAddress: z
+        .string()
+        .min(2, "Address is required"),
 
     hourlyPrice: z
         .number()

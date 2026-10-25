@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken'
 import { AuthRequest, authSingupInterface, cookieOptions } from './auth.interface'
 import { NextFunction, Response } from 'express'
 
-
 const options: cookieOptions = {
     httpOnly: true,
     maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
@@ -25,7 +24,8 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
         next()
 
 
-    } catch (err) {
+    } 
+    catch (err) {
         res.clearCookie("accessToken", options);
 
         if (err instanceof jwt.TokenExpiredError) {

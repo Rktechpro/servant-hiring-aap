@@ -1,8 +1,6 @@
 import { Request } from "express";
 import { RoleEnum } from "./auth.enum";
 
-
-
 export interface authSingupInterface {
     id: string | undefined;
     fullname: string;

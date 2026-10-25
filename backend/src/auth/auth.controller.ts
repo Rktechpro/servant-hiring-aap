@@ -78,7 +78,8 @@ authControlller.post("/logout", async (req: Request, res: Response) => {
             message: signOut.message
         })
 
-    } catch (err) {
+    } 
+    catch (err) {
         if (err instanceof Error)
             return res.status(500).json({ message: err.message })
     }

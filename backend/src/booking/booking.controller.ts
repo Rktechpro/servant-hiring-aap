@@ -6,7 +6,6 @@ import { authMiddleware } from "../auth/auth.middelware";
 
 export const bookingController = Router();
 
-// // CREATE BOOKING - CUSTOMER
 bookingController.post("/createBooking", authMiddleware, async (req: AuthRequest, res: Response) => {
     try {
         const customerId = req.user?.id;
@@ -24,8 +23,7 @@ bookingController.post("/createBooking", authMiddleware, async (req: AuthRequest
         if (!result.success)
             return res.status(400).json({ errors: result.error.issues, });
 
-        const booking = await bookingService.createBooking(
-            customerId,
+        const booking = await bookingService.createBooking(customerId,
             result.data
         );
 
@@ -41,7 +39,7 @@ bookingController.post("/createBooking", authMiddleware, async (req: AuthRequest
 });
 
 
-// 1. Customer bookings get
+// 1.bookings get
 bookingController.get("/my-bookings", authMiddleware, async (req: AuthRequest, res: Response) => {
     try {
         const customerId = req.user?.id;

@@ -16,13 +16,13 @@ const customerSchema = new Schema<customerInterface>(
             default: "",
         },
 
-        address: {
+        addressCustomer: {
             type: String,
             default: "",
             trim: true,
         },
 
-        location: {
+        locationCustomer: {
             type: String,
             default: "",
             trim: true,

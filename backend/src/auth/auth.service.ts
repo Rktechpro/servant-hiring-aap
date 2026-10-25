@@ -60,7 +60,6 @@ export const authLogin = async (data: LoginInput) => {
 
 export const logout = async () => {
     try {
-
         return {
             message: "Logout successful",
         };

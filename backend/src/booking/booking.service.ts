@@ -7,7 +7,6 @@ import { Booking } from "./booking.model";
 import { Types } from "mongoose";
 import { authModel } from "../auth/auth.model";
 
-// CUSTOMER - CREATE BOOKING
 export const createBooking = async (customerId: string, data: CreateBookingDto) => {
     const servant = await Servant.findOne({ _id: data.servantId, isActive: true });
     if (!servant)
@@ -28,8 +27,8 @@ export const createBooking = async (customerId: string, data: CreateBookingDto) 
         hours: data.hours,
         hourlyPrice,
         totalAmount,
-        location: data.location,
-        address: data.address,
+        location: servant.servantlocation,
+        address: servant.servantAddress,
         status: bookingStatus.PENDING,
     });
 

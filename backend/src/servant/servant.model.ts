@@ -27,8 +27,13 @@ const servantSchema = new Schema<servantInterface>(
             type: [String],
             default: [],
         },
+        servantAddress:{
+            type:String,
+            required: true,
 
-        location: {
+        },
+
+        servantlocation: {
             type: String,
             required: true,
             trim: true,

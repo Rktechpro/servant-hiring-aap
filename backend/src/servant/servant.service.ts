@@ -9,16 +9,16 @@ export const createServant = async (userId: string, data: CreateServantInput, se
 
     if (existingServant)
         throw new Error("Servant profile already exists");
-
-    const payload = {
-        userId,
-        image: data.image,
-        bio: data.bio,
-        skills: data.skills,
-        location: data.location,
-        hourlyPrice: data.hourlyPrice,
-        availability: data.availability,
-    };
+const payload = {
+  userId,
+  image: data.image,
+  bio: data.bio,
+  skills: data.skills,
+  servantAddress: data.servantAddress,
+  servantlocation: data.servantlocation,
+  hourlyPrice: data.hourlyPrice,
+  availability: data.availability,
+};
 
     const servant = await Servant.create([payload], { session })
     return servant
@@ -50,7 +50,8 @@ export const updateDataServant = async (userId: string, data: CreateServantInput
         image: data.image,
         bio: data.bio,
         skills: data.skills,
-        location: data.location,
+        address:data.servantAddress,
+        location: data.servantlocation,
         hourlyPrice: data.hourlyPrice,
         availability: data.availability,
     };

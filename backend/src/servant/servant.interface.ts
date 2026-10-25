@@ -5,7 +5,8 @@ export interface servantInterface extends Document {
     image?: string;
     bio?: string;
     skills: string[];
-    location: string;
+    servantAddress:string;
+    servantlocation:string;
     hourlyPrice: number;
     availability: boolean;
     isActive: boolean;
