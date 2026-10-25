@@ -26,11 +26,7 @@ interface BookingResponse {
 }
 
 const ServantPayments = () => {
-  const {
-    data: response,
-    error,
-    isLoading,
-    mutate,
+  const {data: response, error, isLoading, mutate,
   } = useSWR<Booking[] | BookingResponse>("/booking/my-bookings", fetchUrl);
 
   const booking: Booking[] = Array.isArray(response)
@@ -109,7 +105,7 @@ const ServantPayments = () => {
     return (
       <Alert
         type="error"
-        message="Failed to fetch bookings"
+        title="Failed to fetch bookings"
         action={<button onClick={() => mutate()}>Retry</button>}
       />
     );

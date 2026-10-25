@@ -1,13 +1,7 @@
 import { useEffect } from "react";
 import useSWR from "swr";
 import { Button, Card, Empty, Spin, Tag, Typography, message } from "antd";
-import {
-  CheckCircle,
-  XCircle,
-  CalendarDays,
-  Clock,
-  MapPin,
-} from "lucide-react";
+import { CheckCircle, XCircle, CalendarDays, Clock, MapPin} from "lucide-react";
 import { httpsRequest } from "../../lib/http";
 import { bookingSocket } from "../../lib/bookingSocket";
 
@@ -56,15 +50,13 @@ export default function ServantBookingRequests() {
     };
   }, [mutate]);
 
-  const updateStatus = async (
-    bookingId: string,
-    status: "accept" | "reject",
-  ) => {
+const updateStatus = async ( bookingId: string, status: "accept" | "reject") => {
     try {
       const res = await httpsRequest.patch(`/booking/${status}/${bookingId}`);
 
       message.success(res.data.message || `Booking ${status}ed`);
       void mutate();
+      
     } catch (error: any) {
       message.error(
         error?.response?.data?.message || "Unable to update booking",

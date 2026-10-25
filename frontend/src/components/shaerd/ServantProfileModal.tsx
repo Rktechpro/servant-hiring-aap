@@ -1,24 +1,6 @@
-import { useEffect } from "react";
-import {
-  Button,
-  Col,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Row,
-  Select,
-  Space,
-  Switch,
-} from "antd";
-import {
-  UserRound,
-  MapPin,
-  Save,
-  BriefcaseBusiness,
-  IndianRupee,
-  CalendarDays,
-} from "lucide-react";
+import { useState, type ChangeEvent } from "react";
+import {Button,Col,Form,Input,InputNumber,Modal,Row,Select,Space,Switch} from "antd";
+import {UserRound,MapPin,MapPinned,Save,IndianRupee,CalendarDays} from "lucide-react";
 
 const { TextArea } = Input;
 
@@ -26,7 +8,8 @@ export interface ServantProfileForm {
   image?: string;
   bio: string;
   skills: string[];
-  location: string;
+  servantAddress: string;
+  servantlocation: string;
   hourlyPrice: number;
   availability: boolean;
 }
@@ -36,41 +19,54 @@ interface ServantProfileModalProps {
   loading?: boolean;
   onCancel: () => void;
   onSubmit: (values: ServantProfileForm) => void | Promise<void>;
-  initialValues?: Partial<ServantProfileForm>;
   mode: "create" | "edit";
 }
 
-const ServantProfileModal = ({
-  open,
-  loading = false,
-  onCancel,
-  onSubmit,
-  initialValues,
-  mode,
+export const ServantProfileModal = ({open,loading = false,onCancel,onSubmit,mode,
 }: ServantProfileModalProps) => {
-  const [form] = Form.useForm<ServantProfileForm>();
+
+  const [formData, setFormData] = useState<ServantProfileForm>({
+    bio: "",
+    skills: [],
+    servantlocation: "",
+    servantAddress: "",
+    hourlyPrice: 0,
+    availability: true,
+    image: "",
+  });
 
   const isEdit = mode === "edit";
 
-  useEffect(() => {
-    if (open) {
-      form.setFieldsValue({
-        image: initialValues?.image || "",
-        bio: initialValues?.bio || "",
-        skills: initialValues?.skills || [],
-        location: initialValues?.location || "",
-        hourlyPrice: initialValues?.hourlyPrice,
-        availability: initialValues?.availability ?? true,
-      });
-    }
-  }, [open, initialValues, form]);
+const handleInput = ( e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const handleFinish = async (values: ServantProfileForm) => {
-    await onSubmit(values);
+  const handleSave = async () => {
+    if (
+      !formData.bio.trim() ||
+      !formData.servantlocation.trim() ||
+      !formData.servantAddress.trim() ||
+      formData.skills.length === 0 ||
+      formData.hourlyPrice < 1
+    ) {
+      return;
+    }
+
+    await onSubmit(formData);
   };
 
   const handleCancel = () => {
-    form.resetFields();
+    setFormData({
+      bio: "",
+      skills: [],
+      servantlocation: "",
+      servantAddress: "",
+      hourlyPrice: 0,
+      availability: true,
+      image: "",
+    });
+
     onCancel();
   };
 
@@ -91,23 +87,15 @@ const ServantProfileModal = ({
       centered
       destroyOnHidden
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleFinish}
-        className="pt-4"
-      >
+      <Form layout="vertical" className="pt-4">
         <Row gutter={16}>
+          {/* Bio */}
           <Col xs={24}>
-            <Form.Item
-              name="bio"
-              label="About Me"
-              rules={[
-                { required: true, message: "Please enter your bio" },
-                { max: 500, message: "Bio cannot exceed 500 characters" },
-              ]}
-            >
+            <Form.Item label="About Me" required>
               <TextArea
+                name="bio"
+                value={formData.bio}
+                onChange={handleInput}
                 rows={3}
                 maxLength={500}
                 showCount
@@ -115,83 +103,105 @@ const ServantProfileModal = ({
               />
             </Form.Item>
           </Col>
-
           <Col xs={24}>
-            <Form.Item
-              name="skills"
-              label={
-                <div className="flex items-center gap-2">
-                  <BriefcaseBusiness size={16} />
-                  <span>Skills</span>
-                </div>
-              }
-              rules={[
-                {
-                  required: true,
-                  type: "array",
-                  min: 1,
-                  message: "Please add at least one skill",
-                },
-              ]}
-            >
+            <Form.Item label="Skills" required>
               <Select
                 mode="tags"
                 size="large"
+                value={formData.skills}
+                onChange={(skills: string[]) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    skills,
+                  }))
+                }
                 placeholder="Type a skill and press Enter"
                 tokenSeparators={[","]}
               />
             </Form.Item>
           </Col>
-
           <Col xs={24} md={12}>
             <Form.Item
-              name="location"
               label={
                 <div className="flex items-center gap-2">
                   <MapPin size={16} />
                   <span>Location</span>
                 </div>
               }
-              rules={[
-                { required: true, message: "Please enter your location" },
-              ]}
+              required
             >
-              <Input size="large" placeholder="e.g. Delhi" />
+              <Input
+                name="servantlocation"
+                value={formData.servantlocation}
+                onChange={handleInput}
+                size="large"
+                placeholder="e.g. Meerut"
+              />
             </Form.Item>
           </Col>
-
           <Col xs={24} md={12}>
             <Form.Item
-              name="hourlyPrice"
               label={
                 <div className="flex items-center gap-2">
                   <IndianRupee size={16} />
                   <span>Hourly Price (₹)</span>
                 </div>
               }
-              rules={[{ required: true, message: "Please enter hourly price" }]}
+              required
             >
               <InputNumber
                 min={1}
                 size="large"
                 className="w-full"
+                value={formData.hourlyPrice || undefined}
+                onChange={(hourlyPrice) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    hourlyPrice: hourlyPrice ?? 0,
+                  }))
+                }
                 placeholder="e.g. 250"
               />
             </Form.Item>
           </Col>
-
           <Col xs={24}>
             <Form.Item
-              name="availability"
+              label={
+                <div className="flex items-center gap-2">
+                  <MapPinned size={16} />
+                  <span>Full Address</span>
+                </div>
+              }
+              required
+            >
+              <TextArea
+                name="servantAddress"
+                value={formData.servantAddress}
+                onChange={handleInput}
+                rows={3}
+                maxLength={300}
+                showCount
+                placeholder="Enter your complete address"
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24}>
+            <Form.Item
               label={
                 <div className="flex items-center gap-2">
                   <CalendarDays size={16} />
                   <span>Available for Bookings</span>
                 </div>
               }
-              valuePropName="checked"
             >
               <Switch
+                checked={formData.availability}
+                onChange={(availability) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    availability,
+                  }))
+                }
                 checkedChildren="Available"
                 unCheckedChildren="Unavailable"
               />
@@ -206,11 +216,13 @@ const ServantProfileModal = ({
               justifyContent: "flex-end",
             }}
           >
-            <Button onClick={handleCancel}>Cancel</Button>
+            <Button onClick={handleCancel}>
+              Cancel
+            </Button>
 
             <Button
               type="primary"
-              htmlType="submit"
+              onClick={handleSave}
               loading={loading}
               icon={<Save size={17} />}
             >
@@ -223,4 +235,3 @@ const ServantProfileModal = ({
   );
 };
 
-export default ServantProfileModal;

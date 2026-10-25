@@ -32,7 +32,6 @@ export const Signup = () => {
       const respose = await httpsRequest.post("/auth/signup", values);
       setForm(respose.data);
       router("/auth/login");
-      console.log("Signup successful:", respose.data);
     } catch (err) {
       catchError(err);
     } finally {
@@ -44,7 +43,6 @@ export const Signup = () => {
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-6xl overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="grid min-h-175 lg:grid-cols-2">
-          {/* LEFT SIDE */}
           <div className="relative hidden overflow-hidden bg-linear-to-br from-indigo-600 via-violet-600 to-purple-600 p-12 text-white lg:flex">
             <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-white/10" />
 
@@ -52,7 +50,6 @@ export const Signup = () => {
 
             <div className="relative z-10 flex flex-col justify-between">
               <div>
-                {/* Logo */}
                 <div className="mb-12 flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl font-bold text-indigo-600">
                     SH
@@ -60,8 +57,6 @@ export const Signup = () => {
 
                   <span className="text-2xl font-bold">ServantHire</span>
                 </div>
-
-                {/* Heading */}
                 <h1 className="max-w-lg text-5xl font-bold leading-tight">
                   Find help.
                   <span className="block text-purple-200">
@@ -73,14 +68,11 @@ export const Signup = () => {
                   Create your account and connect with trusted household service
                   professionals around you.
                 </p>
-
-                {/* Features */}
                 <div className="mt-10 space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
                       ✓
                     </div>
-
                     <span className="text-purple-100">
                       Find trusted servants near you
                     </span>
@@ -113,16 +105,11 @@ export const Signup = () => {
               </div>
             </div>
           </div>
-
-          {/* RIGHT SIDE */}
           <div className="flex items-center justify-center p-6 sm:p-10 lg:p-14">
             <div className="w-full max-w-md">
-              {/* Mobile Logo */}
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100 text-xl font-bold text-indigo-600 lg:hidden">
                 SH
               </div>
-
-              {/* Header */}
               <div className="mb-7">
                 <h2 className="text-3xl font-bold text-slate-900">
                   Create account 🚀
@@ -133,17 +120,8 @@ export const Signup = () => {
                 </p>
               </div>
 
-              {/* FORM */}
-              <Form<SignupForm>
-                layout="vertical"
-                size="large"
-                onFinish={handleSignup}
-                requiredMark={false}
-              >
-                {/* FULL NAME */}
-                <Form.Item
-                  label="Full Name"
-                  name="fullname"
+              <Form layout="vertical" size="large"onFinish={handleSignup} requiredMark={false}>
+                <Form.Item label="Full Name" name="fullname"
                   rules={[
                     {
                       required: true,
@@ -163,9 +141,7 @@ export const Signup = () => {
                   />
                 </Form.Item>
 
-                {/* EMAIL + MOBILE */}
                 <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 sm:gap-4">
-                  {/* EMAIL */}
                   <Form.Item
                     label="Email"
                     name="email"
@@ -188,7 +164,6 @@ export const Signup = () => {
                     />
                   </Form.Item>
 
-                  {/* MOBILE */}
                   <Form.Item
                     label="Mobile"
                     name="mobile"
@@ -203,7 +178,7 @@ export const Signup = () => {
                   </Form.Item>
                 </div>
 
-                {/* ROLE */}
+  
                 <Form.Item
                   label="I am a"
                   name="role"
@@ -240,7 +215,6 @@ export const Signup = () => {
                   />
                 </Form.Item>
 
-                {/* PASSWORD */}
                 <Form.Item
                   label="Password"
                   name="password"
@@ -263,7 +237,6 @@ export const Signup = () => {
                   />
                 </Form.Item>
 
-                {/* SUBMIT */}
                 <Form.Item className="mb-5!">
                   <Button
                     type="primary"
@@ -279,14 +252,12 @@ export const Signup = () => {
                 </Form.Item>
               </Form>
 
-              {/* DIVIDER */}
               <Divider className="my-6!">
                 <span className="text-xs text-slate-400">
                   ALREADY HAVE AN ACCOUNT?
                 </span>
               </Divider>
 
-              {/* LOGIN */}
               <p className="text-center text-sm text-slate-500">
                 Already registered?{" "}
                 <Link

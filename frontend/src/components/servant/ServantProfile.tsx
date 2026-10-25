@@ -16,8 +16,9 @@ import type { ChangeEvent } from "react";
 import { httpsRequest } from "../../lib/http";
 import { useAuthStore } from "../store/auth.store";
 import ServantCreate from "./ServantCreate";
-import ServantProfileModal from "../shaerd/ServantProfileModal";
+
 import { fetchUrl } from "../../lib/fetch";
+import { ServantProfileModal } from "../shaerd/ServantProfileModal";
 
 interface ServantFormData {
   bio?: string;
@@ -240,10 +241,20 @@ const ServantProfile = () => {
               <div>
                 <p className="text-xs text-slate-400">Location</p>
                 <p className="mt-1 text-sm font-medium text-slate-700">
-                  {servant.location || "Location not provided"}
+                  {servant.servantlocation || "Location not provided"}
                 </p>
               </div>
             </div>
+            <div className="flex items-start gap-4 rounded-xl bg-slate-50 p-5">
+      <MapPin className="text-violet-600" size={22} />
+
+      <div>
+        <p className="text-xs text-slate-400">Address</p>
+        <p className="mt-1 text-sm font-medium text-slate-700">
+          {servant.servantAddress || "Address not provided"}
+        </p>
+      </div>
+    </div>
           </Card>
         </div>
 
@@ -294,7 +305,9 @@ const ServantProfile = () => {
                 <div>
                   <p className="text-xs text-slate-400">Availability</p>
                   <p className="mt-1 text-sm font-medium text-slate-700">
-                    {servant.availability || "Not provided"}
+                <Tag color={servant.isActive ? "success" : "default"}>
+                    {servant.isActive ? "Available" : "Unavailable"}
+                  </Tag>
                   </p>
                 </div>
               </div>
@@ -315,7 +328,6 @@ const ServantProfile = () => {
             loading={loading}
             onCancel={() => setOpen(false)}
             onSubmit={handleSubmit}
-            initialValues={servant}
             mode="edit"
           />
         </div>

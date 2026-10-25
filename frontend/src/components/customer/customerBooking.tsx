@@ -1,4 +1,4 @@
-import { Card, Tag, Spin, Alert, Empty } from "antd";
+import { Card, Tag, Alert, Empty, Skeleton } from "antd";
 import useSWR from "swr";
 import { fetchUrl } from "../../lib/fetch";
 
@@ -28,14 +28,12 @@ const CustomerBooking = () => {
     "/booking/my-bookings",
     fetchUrl,
   );
-
   const booking = data?.data;
-  console.log(booking);
 
   if (isLoading) {
     return (
       <div className="flex justify-center p-10">
-        <Spin size="large" />
+        <Skeleton active />
       </div>
     );
   }

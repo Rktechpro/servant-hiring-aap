@@ -4,7 +4,8 @@ import { Plus, PlusCircle } from "lucide-react";
 import { mutate } from "swr";
 
 import { httpsRequest } from "../../lib/http";
-import ServantProfileModal from "../shaerd/ServantProfileModal";
+import { ServantProfileModal } from "../shaerd/ServantProfileModal";
+
 
 interface ServantFormData {
   bio?: string;
@@ -24,26 +25,20 @@ const ServantCreate = () => {
     setLoading(true);
 
     try {
-      const createResponse = await httpsRequest.post(
-        "/servant/createServant",
-        values,
-      );
-
+      const createResponse = await httpsRequest.post("/servant/createServant", values);
       try {
         await httpsRequest.post("/servant/generate-embeddings");
         message.success("Servant profile created and indexed successfully");
-      } catch (embeddingError) {
-        console.error("Embedding generation failed:", embeddingError);
-
-        message.warning(
-          "Profile created, but search indexing failed. Please retry indexing.",
+      } 
+      catch (embeddingError) {
+        message.warning( "Profile created, but search indexing failed. Please retry indexing.",
         );
       }
 
       setResponse(createResponse);
       setOpen(false);
-
       await mutate("/servant");
+      
     } catch (error: any) {
       message.error(
         error?.response?.data?.message || "Failed to create servant profile",
@@ -87,7 +82,7 @@ const ServantCreate = () => {
         loading={loading}
         onCancel={() => setOpen(false)}
         onSubmit={handleSubmit}
-        initialValues={response?.data}
+      
         mode={response ? "edit" : "create"}
       />
     </div>

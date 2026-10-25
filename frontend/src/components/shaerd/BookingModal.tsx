@@ -1,15 +1,6 @@
 import { useState } from "react";
-import {
-  Modal,
-  Form,
-  DatePicker,
-  TimePicker,
-  Input,
-  Button,
-  InputNumber,
-  message,
-} from "antd";
-import dayjs, { Dayjs } from "dayjs";
+import { Modal, Form, DatePicker, TimePicker, Input, Button, InputNumber, message} from "antd";
+import dayjs, { type Dayjs } from "dayjs";
 
 interface BookingFormValues {
   bookingDate: Dayjs;
@@ -22,6 +13,10 @@ interface BookingFormValues {
 interface BookingModalProps {
   open: boolean;
   servantId: string;
+  customer?: {
+    location?: string;
+    address?: string;
+  };
   onClose: () => void;
   onSubmit: (data: {
     servantId: string;
@@ -31,18 +26,24 @@ interface BookingModalProps {
     hours: number;
     location: string;
     address: string;
-  }) => void;
+  }) => void | Promise<void>;
 }
 
-export default function BookingModal({
-  open,
-  servantId,
-  onClose,
-  onSubmit,
-}: BookingModalProps) {
+export const BookingModal=({open,servantId,customer,onClose,onSubmit}: BookingModalProps)=> {
   const [form] = Form.useForm<BookingFormValues>();
   const [hours, setHours] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleModalOpen = (visible: boolean) => {
+    if (visible) {
+      form.setFieldsValue({
+        bookingDate: dayjs(),
+        location: customer?.location ?? "",
+        address: customer?.address ?? "",
+      });
+      setHours(0);
+    }
+  };
 
   const calculateHours = (start?: Dayjs, end?: Dayjs) => {
     if (!start || !end) {
@@ -63,10 +64,8 @@ export default function BookingModal({
       return;
     }
 
-    const startMinutes =
-      values.startTime.hour() * 60 + values.startTime.minute();
-
-    const endMinutes = values.endTime.hour() * 60 + values.endTime.minute();
+    const startMinutes = values.startTime.hour() * 60 + values.startTime.minute();
+    const endMinutes =values.endTime.hour() * 60 + values.endTime.minute();
 
     if (endMinutes <= startMinutes) {
       message.error("End time must be after start time");
@@ -75,19 +74,25 @@ export default function BookingModal({
 
     const calculatedHours = (endMinutes - startMinutes) / 60;
 
+    if (calculatedHours < 1) {
+      message.error("Minimum booking duration is 1 hour");
+      return;
+    }
+
     const payload = {
       servantId,
       bookingDate: values.bookingDate.format("YYYY-MM-DD"),
       startTime: values.startTime.format("HH:mm"),
       endTime: values.endTime.format("HH:mm"),
       hours: calculatedHours,
-      location: values.location,
-      address: values.address,
+      location: values.location.trim(),
+      address: values.address.trim(),
     };
 
     try {
       setSubmitting(true);
       await onSubmit(payload);
+      message.success("Booking request submitted");
       form.resetFields();
       setHours(0);
       onClose();
@@ -103,6 +108,7 @@ export default function BookingModal({
       title="Book a Servant"
       open={open}
       onCancel={onClose}
+      afterOpenChange={handleModalOpen}
       footer={null}
       destroyOnHidden
       centered
@@ -111,19 +117,23 @@ export default function BookingModal({
         form={form}
         layout="vertical"
         onFinish={handleFinish}
-        initialValues={{
-          bookingDate: dayjs(),
-        }}
       >
         <Form.Item
           label="Booking Date"
           name="bookingDate"
-          rules={[{ required: true, message: "Please select booking date" }]}
+          rules={[
+            {
+              required: true,
+              message: "Please select booking date",
+            },
+          ]}
         >
           <DatePicker
             className="w-full"
             format="YYYY-MM-DD"
-            disabledDate={(date) => date.isBefore(dayjs(), "day")}
+            disabledDate={(date) =>
+              date.isBefore(dayjs(), "day")
+            }
           />
         </Form.Item>
 
@@ -131,7 +141,12 @@ export default function BookingModal({
           <Form.Item
             label="Start Time"
             name="startTime"
-            rules={[{ required: true, message: "Select start time" }]}
+            rules={[
+              {
+                required: true,
+                message: "Select start time",
+              },
+            ]}
           >
             <TimePicker
               className="w-full"
@@ -149,7 +164,12 @@ export default function BookingModal({
           <Form.Item
             label="End Time"
             name="endTime"
-            rules={[{ required: true, message: "Select end time" }]}
+            rules={[
+              {
+                required: true,
+                message: "Select end time",
+              },
+            ]}
           >
             <TimePicker
               className="w-full"
@@ -168,36 +188,57 @@ export default function BookingModal({
         <Form.Item label="Total Hours">
           <InputNumber
             className="w-full"
-            value={hours}
+            value={hours || undefined}
             readOnly
             suffix="hours"
+            placeholder="Calculated automatically"
           />
         </Form.Item>
 
         <Form.Item
           label="Location / City"
           name="location"
-          rules={[{ required: true, message: "Please enter your location" }]}
+          rules={[
+            {
+              required: true,
+              whitespace: true,
+              message: "Please enter your location",
+            },
+          ]}
         >
-          <Input placeholder="e.g. Delhi" />
+          <Input placeholder="Your city" />
         </Form.Item>
 
         <Form.Item
           label="Full Address"
           name="address"
           rules={[
-            { required: true, message: "Please enter your full address" },
+            {
+              required: true,
+              whitespace: true,
+              message: "Please enter your full address",
+            },
           ]}
         >
           <Input.TextArea
-            placeholder="e.g. Sector 15, Rohini, Delhi"
+            placeholder="Your complete address"
             rows={3}
           />
         </Form.Item>
 
         <div className="flex justify-end gap-2">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" htmlType="submit" loading={submitting}>
+          <Button
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={submitting}
+          >
             Confirm Booking
           </Button>
         </div>
@@ -205,3 +246,4 @@ export default function BookingModal({
     </Modal>
   );
 }
+

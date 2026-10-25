@@ -1,15 +1,4 @@
-import {
-  ArrowRight,
-  CheckCircle2,
-  ShieldCheck,
-  Star,
-  Search,
-  Sparkles,
-  Utensils,
-  House,
-  Shirt,
-  Clock3,
-  Users,
+import {ArrowRight,CheckCircle2,ShieldCheck,Star,Search,Sparkles,Utensils,House,Shirt,Clock3,Users,
   BriefcaseBusiness,
   Menu,
   X,
@@ -18,13 +7,17 @@ import {
   MapPin,
   IndianRupee,
 } from "lucide-react";
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar, Dropdown, message } from "antd";
 import type { MenuProps } from "antd";
 import { useAuthStore } from "../store/auth.store";
 import { httpsRequest } from "../../lib/http";
-import BookingModal from "../shaerd/BookingModal";
+import {BookingModal} from "../shaerd/BookingModal";
+import useSWR from "swr";
+import { fetchUrl } from "../../lib/fetch";
+
 
 interface ServantProfile {
   _id: string;
@@ -87,6 +80,10 @@ const steps = [
 ];
 
 const LandingPage = () => {
+  const { data: customerResponse } = useSWR("/customer",fetchUrl);
+
+  const customer = customerResponse?.data;
+  console.log(customer)
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -183,9 +180,9 @@ const LandingPage = () => {
   const bookingHandle = async (value: any) => {
     try {
       const { data } = await httpsRequest.post("/booking/createBooking", value);
-
       console.log("Booking Success:", data);
       message.success("Booking created successfully!");
+      navigate("/dashboard-customer")
       setBookingOpen(false);
     } catch (err: any) {
       message.error(err.response?.data?.message || "Booking failed");
@@ -263,8 +260,6 @@ const LandingPage = () => {
           </div>
         </nav>
       </header>
-
-      {/* Mobile Sidebar Toggle */}
       <button
         type="button"
         aria-label={menuOpen ? "Close sidebar" : "Open sidebar"}
@@ -284,7 +279,6 @@ const LandingPage = () => {
         />
       )}
 
-      {/* Mobile Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-60 flex w-72 max-w-[85vw] flex-col border-r border-slate-200 bg-white shadow-2xl transition-transform duration-300 md:hidden ${
           menuOpen ? "translate-x-0" : "-translate-x-full"
@@ -370,7 +364,6 @@ const LandingPage = () => {
         </nav>
       </aside>
 
-      {/* Hero */}
       <section className="relative bg-linear-to-br from-indigo-50 via-white to-violet-50 md:pt-16">
         <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-indigo-200/30 blur-3xl" />
 
@@ -626,10 +619,14 @@ const LandingPage = () => {
                   ))}
                 </div>
                 <BookingModal
-                  open={bookingOpen}
-                  servantId={selectedServantId}
-                  onClose={() => setBookingOpen(false)}
-                  onSubmit={bookingHandle}
+                open={bookingOpen}
+                servantId={selectedServantId}
+                customer={{
+                   location: customer?.locationCustomer ?? "",
+                   address: customer?.addressCustomer ?? "",
+                }}
+                 onClose={() => setBookingOpen(false)}
+                 onSubmit={bookingHandle}
                 />
               </section>
             )}
@@ -637,7 +634,6 @@ const LandingPage = () => {
         )}
       </section>
 
-      {/* Services */}
       <section
         id="services"
         className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-24"
@@ -668,11 +664,6 @@ const LandingPage = () => {
             return (
               <button
                 type="button"
-                onClick={() => {
-                  setSearch(service.title);
-                  void handleSearch(service.title);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
                 key={service.title}
                 className="group rounded-3xl border border-slate-100 bg-white p-6 text-left transition duration-300 hover:-translate-y-1 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-100/60"
               >
@@ -698,7 +689,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* How it works */}
       <section id="how-it-works" className="bg-slate-50 py-20 lg:py-24">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="mx-auto mb-14 max-w-2xl text-center">
@@ -731,7 +721,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Why choose us */}
       <section
         id="why-us"
         className="mx-auto grid max-w-7xl gap-12 px-5 py-20 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-24"
@@ -801,7 +790,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="px-5 pb-20 lg:px-8 lg:pb-24">
         <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl bg-slate-900 px-6 py-14 text-center sm:px-12 sm:py-16">
           <Clock3 className="mx-auto text-indigo-300" size={38} />
@@ -821,7 +809,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-slate-100">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <Link to="/" className="flex items-center gap-2 font-extrabold">

@@ -9,7 +9,6 @@ const NoteFound: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-indigo-50 px-4 py-10">
       <div className="w-full max-w-xl text-center">
-        {/* Illustration */}
         <div className="relative mx-auto mb-8 flex h-36 w-36 items-center justify-center rounded-full bg-blue-100 shadow-inner">
           <div className="absolute inset-3 rounded-full border-2 border-dashed border-blue-300 animate-spin [animation-duration:20s]" />
           <SearchX size={64} strokeWidth={1.5} className="text-blue-600" />
@@ -18,7 +17,6 @@ const NoteFound: React.FC = () => {
           </span>
         </div>
 
-        {/* Content */}
         <p className="mb-3 text-sm font-bold uppercase tracking-[0.25em] text-blue-600">
           Page Not Found
         </p>
@@ -32,7 +30,6 @@ const NoteFound: React.FC = () => {
           or the link is incorrect.
         </p>
 
-        {/* Buttons */}
         <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <Button
             type="primary"

@@ -1,26 +1,25 @@
-import { Button, Card } from "antd";
+import { Button, Card, message } from "antd";
 import { Plus, PlusCircle } from "lucide-react";
 
 import { useState } from "react";
 import { httpsRequest } from "../../lib/http";
 import CustomerProfileModal from "../shaerd/model";
 import { mutate } from "swr";
+import { isAxiosError } from "axios";
 
 const Createprofile = () => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<any>(null);
+  const [data, setdata] = useState<any>(null);
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
-      const respose = await httpsRequest.post(
-        "/customer/createCustomer",
-        values,
-      );
+      const response= await httpsRequest.post(  "/customer/createCustomer",  values);
       mutate("/customer");
-      setResponse(respose);
+      setdata(response);
     } catch (err) {
-      console.log(err);
+      if(isAxiosError(err))
+           message.error(err.response?.data?.message || "Failed to create customer")
     } finally {
       setLoading(false);
     }
@@ -60,8 +59,8 @@ const Createprofile = () => {
         loading={loading}
         onCancel={() => setOpen(false)}
         onSubmit={handleSubmit}
-        initialValues={response?.data}
-        mode={response ? "edit" : "create"}
+        initialValues={data?.data}
+        mode={data ? "edit" : "create"}
       />
     </>
   );

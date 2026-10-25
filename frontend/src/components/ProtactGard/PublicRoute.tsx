@@ -5,12 +5,10 @@ export const PublicRoute = () => {
   const user = useAuthStore((state) => state.user);
 
   if (user?.role === "SERVANT") {
-    // return <Navigate to="/dashboard-servant" replace />;
     return <Navigate to="/" replace />;
   }
 
   if (user?.role === "CUSTOMER") {
-    // return <Navigate to="/dashboard-customer" replace />;
     return <Navigate to="/" replace />;
   }
 

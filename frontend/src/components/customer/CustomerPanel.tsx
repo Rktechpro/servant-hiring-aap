@@ -1,24 +1,8 @@
 import { useEffect } from "react";
-import useSWR from "swr";
-import {
-  Button,
-  Card,
-  Col,
-  Empty,
-  Row,
-  Spin,
-  Statistic,
-  Tag,
-  Typography,
-  message,
+import useSWR, { mutate } from "swr";
+import { Button, Card, Col, Empty, Row, Spin, Statistic, Tag, Typography, message
 } from "antd";
-import {
-  Calendar,
-  CalendarDays,
-  CheckCircle,
-  Clock,
-  MapPin,
-} from "lucide-react";
+import { Calendar, CalendarDays, CheckCircle, Clock, MapPin} from "lucide-react";
 import moment from "moment";
 import { bookingSocket } from "../../lib/bookingSocket";
 import { fetchUrl } from "../../lib/fetch";
@@ -62,12 +46,7 @@ const ENV = import.meta.env;
 
 export const CustomerPanel = () => {
   const { Razorpay } = useRazorpay();
-  const {
-    data: response,
-    error,
-    isLoading,
-    mutate,
-  } = useSWR<Booking[] | BookingResponse>("/booking/my-bookings", fetchUrl);
+  const { data: response, error, isLoading} = useSWR<Booking[] | BookingResponse>("/booking/my-bookings", fetchUrl);
 
   const booking = Array.isArray(response) ? response : (response?.data ?? []);
 
@@ -78,7 +57,7 @@ export const CustomerPanel = () => {
       message?: string;
     }) => {
       message.info(payload.message || `Booking status: ${payload.status}`);
-      void mutate();
+      void mutate("/booking");
     };
 
     bookingSocket.connect();
@@ -112,9 +91,7 @@ export const CustomerPanel = () => {
   const paymenthandle = async (bookingId: string) => {
     try {
       console.log(bookingId);
-      const { data } = await httpsRequest.post(
-        `/payment/create-order/${bookingId}`,
-      );
+      const { data } = await httpsRequest.post(  `/payment/create-order/${bookingId}`);
       const payment = data.data;
       console.log(payment);
       const options: RazorpayOrderOptions = {

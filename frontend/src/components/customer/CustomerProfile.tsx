@@ -1,59 +1,67 @@
-import { useRef, useState } from "react";
-import useSWR from "swr";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Camera,
-  CheckCircle,
-  Edit,
-  Home,
-} from "lucide-react";
+import { useRef, useState, type ChangeEvent } from "react";
+import useSWR, { mutate } from "swr";
+import {Mail,Phone,MapPin,Camera,CheckCircle,Edit,Home,} from "lucide-react";
 import { Avatar, Button, Card, Skeleton, message } from "antd";
-import type { ChangeEvent } from "react";
-
 import { httpsRequest } from "../../lib/http";
 import { useAuthStore } from "../store/auth.store";
-import CustomerProfileModal from "../shaerd/model";
+import CustomerProfileModal, {
+  type CustomerProfileForm,
+} from "../shaerd/model";
 import { fetchUrl } from "../../lib/fetch";
 import moment from "moment";
 import Createprofile from "./createCustomer";
 
-interface CustomerFormData {
+interface CustomerProfileData {
   image?: string;
-  address: string;
-  location: string;
+  locationCustomer?: string;
+  addressCustomer?: string;
+  createdAt?: string;
+  userId?: {
+    fullname?: string;
+    email?: string;
+    mobile?: string;
+  };
 }
 
 const CustomerProfile = () => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuthStore();
-  const {
-    data: response,
-    isLoading,
-    error,
-    mutate,
-  } = useSWR("/customer", fetchUrl);
 
-  const handleSubmit = async (values: CustomerFormData) => {
+  const { user } = useAuthStore();
+
+  const { data: response, isLoading, error} = useSWR("/customer", fetchUrl);
+
+  const customer: CustomerProfileData | undefined = response?.data;
+
+  const handleSubmit = async (values: CustomerProfileForm) => {
     try {
       setLoading(true);
-      await httpsRequest.put("/customer/updateCustomer", values);
+      const payload = {
+        addressCustomer: values.addressCustomer,
+        locationCustomer: values.locationCustomer,
+      };
+
+      await httpsRequest.put("/customer/updateCustomer", payload);
+
       message.success("Customer profile updated successfully");
       setOpen(false);
-      await mutate();
+      await mutate("/customer");
+
     } catch (error: any) {
-      message.error(error?.response?.data?.message || "Something went wrong");
+      message.error( error?.response?.data?.message ||   "Failed to update customer profile");
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  // Upload customer profile image
+  const handleImageUpload = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
+
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -62,7 +70,6 @@ const CustomerProfile = () => {
       return;
     }
 
-    // restrict image size to 5 MB
     if (file.size > 5 * 1024 * 1024) {
       message.error("Image size must be less than 5 MB");
       event.target.value = "";
@@ -74,17 +81,22 @@ const CustomerProfile = () => {
 
     try {
       setLoading(true);
-      await httpsRequest.put("/servant/imageServantProfile", formData);
+
+      // This endpoint must exist in your customer update profile.
+      await httpsRequest.put("/customer/imageCustomerProfile",formData);
       message.success("Profile image updated successfully");
-      await mutate();
+      await mutate("/customer");
+
     } catch (error: any) {
       message.error(
-        error?.response?.data?.message || "Failed to update profile image",
+        error?.response?.data?.message ||
+          "Failed to update profile image",
       );
     } finally {
       setLoading(false);
+
       if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Reset the file input
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -99,14 +111,21 @@ const CustomerProfile = () => {
 
   if (error) {
     return (
-      <div className="p-6 text-red-500">Failed to load customer profile</div>
+      <div className="p-6 text-red-500">
+        Failed to load customer profile
+      </div>
     );
   }
 
-  const customer = response.data;
   if (!customer) {
     return <Createprofile />;
   }
+
+  const imageUrl = customer.image
+    ? customer.image.startsWith("http")
+      ? customer.image
+      : `${import.meta.env.VITE_API_URL?.replace(/\/$/, "")}${customer.image}`
+    : undefined;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -119,11 +138,7 @@ const CustomerProfile = () => {
               <div className="relative">
                 <Avatar
                   size={120}
-                  src={
-                    customer.image
-                      ? `${import.meta.env.VITE_API_URL?.replace(/\/$/, "")}${customer.image}`
-                      : undefined
-                  }
+                  src={imageUrl}
                   icon={
                     !customer.image && (
                       <span className="text-3xl">
@@ -133,6 +148,7 @@ const CustomerProfile = () => {
                   }
                   className="border-4! border-white! bg-indigo-100! text-indigo-600! shadow-md"
                 />
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -148,7 +164,7 @@ const CustomerProfile = () => {
                   title="Update profile image"
                   className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-100 disabled:opacity-50"
                 >
-                  <Camera />
+                  <Camera size={18} />
                 </button>
               </div>
 
@@ -157,22 +173,23 @@ const CustomerProfile = () => {
                   <h1 className="text-2xl font-bold capitalize text-slate-800">
                     {customer.userId?.fullname || user?.fullname}
                   </h1>
-
                   <CheckCircle className="text-green-600!" />
                 </div>
 
-                <p className="mt-1 text-base text-slate-500">Customer</p>
+                <p className="mt-1 text-base text-slate-500">
+                  Customer
+                </p>
 
                 <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
-                  <MapPin />
-                  {customer.location || "Location not provided"}
+                  <MapPin size={16} />
+                  {customer.locationCustomer || "Location not provided"}
                 </p>
               </div>
             </div>
 
             <Button
               type="primary"
-              icon={<Edit />}
+              icon={<Edit size={16} />}
               size="large"
               className="rounded-xl!"
               onClick={() => setOpen(true)}
@@ -190,28 +207,30 @@ const CustomerProfile = () => {
             className="my-4! rounded-2xl! border-0! shadow-sm"
           >
             <p className="leading-7 text-slate-600">
-              {customer.address
-                ? `Customer located in ${customer.location || "your area"}.`
+              {customer.addressCustomer
+                ? `Customer located in ${customer.addressCustomer || "your area"}.`
                 : "No customer profile information added yet."}
             </p>
           </Card>
 
           <Card
             title={
-              <span className="text-lg font-semibold">Address Information</span>
+              <span className="text-lg font-semibold">
+                Address Information
+              </span>
             }
             className="rounded-2xl! border-0! shadow-sm"
           >
             <div className="rounded-xl bg-slate-50 p-5">
               <div className="flex gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <Home />
+                  <Home size={20} />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-400">Full Address</p>
                   <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                    {customer.address || "Address not provided"}
+                    {customer.addressCustomer || "Address not provided"}
                   </p>
                 </div>
               </div>
@@ -222,19 +241,21 @@ const CustomerProfile = () => {
         <div className="space-y-6">
           <Card
             title={
-              <span className="text-lg font-semibold">Contact Information</span>
+              <span className="text-lg font-semibold">
+                Contact Information
+              </span>
             }
             className="my-4! rounded-2xl! border-0! shadow-sm"
           >
             <div className="space-y-5">
               <div className="flex gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <Mail />
+                  <Mail size={20} />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-400">Email</p>
-                  <p className="mt-1 text-sm font-medium text-slate-700">
+                  <p className="mt-1 break-all text-sm font-medium text-slate-700">
                     {customer.userId?.email ||
                       user?.email ||
                       "Email not provided"}
@@ -244,7 +265,7 @@ const CustomerProfile = () => {
 
               <div className="flex gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <Phone />
+                  <Phone size={20} />
                 </div>
 
                 <div>
@@ -257,13 +278,13 @@ const CustomerProfile = () => {
 
               <div className="flex gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <MapPin />
+                  <MapPin size={20} />
                 </div>
 
                 <div>
                   <p className="text-xs text-slate-400">Location</p>
                   <p className="mt-1 text-sm font-medium text-slate-700">
-                    {customer.location || "Not provided"}
+                    {customer.locationCustomer || "Not provided"}
                   </p>
                 </div>
               </div>
@@ -273,11 +294,13 @@ const CustomerProfile = () => {
           <Card className="my-4! rounded-2xl! border-0! bg-linear-to-br from-indigo-600 to-violet-600! shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white">
-                <CheckCircle />
+                <CheckCircle size={20} />
               </div>
 
               <div>
-                <p className="font-semibold text-white">Customer Profile</p>
+                <p className="font-semibold text-white">
+                  Customer Profile
+                </p>
 
                 <p className="text-xs text-indigo-100">
                   {customer.createdAt
@@ -294,7 +317,6 @@ const CustomerProfile = () => {
           loading={loading}
           onCancel={() => setOpen(false)}
           onSubmit={handleSubmit}
-          initialValues={customer}
           mode="edit"
         />
       </div>
