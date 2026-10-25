@@ -91,13 +91,13 @@ export const razorpayWebhook = async (data: string, signature: any) => {
     // 2. Parse and save verified payload
     const body = JSON.parse(data);
 
-    const filePath = path.resolve(process.cwd(), "payment.json");
+    // const filePath = path.resolve(process.cwd(), "payment.json");
 
-    fs.writeFileSync(
-        filePath,
-        JSON.stringify(body, null, 2),
-        "utf8"
-    );
+    // fs.writeFileSync(
+    //     filePath,
+    //     JSON.stringify(body, null, 2),
+    //     "utf8"
+    // );
 
     // 4. Update database status
     const paymentEntity = body.payload?.payment?.entity;

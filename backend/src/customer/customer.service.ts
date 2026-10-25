@@ -13,8 +13,8 @@ export const createCustomer = async (userId: string, data: createCustomerDto, se
     const payload = {
         userId,
         image: data.image,
-        address: data.addressCustomer,
-        location: data.locationCustomer,
+        addressCustomer: data.addressCustomer,
+        locationCustomer: data.locationCustomer,
     }
 
     const customers = await Customer.create([payload], { session })

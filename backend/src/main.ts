@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 import path from 'path'
 import mongoose from 'mongoose'
-import express, { Request, Response } from 'express'
+import express from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { authControlller } from './auth/auth.controller'
@@ -16,6 +16,7 @@ import { Server } from 'socket.io'
 import CorsConfig from './config/cose'
 import BookingSocket from './socket/Booking.Socket'
 
+const ENV=`${process.env.MONGO_URL}/${process.env.DB}`
 
 const app = express()
 const server = createServer(app)
@@ -46,7 +47,7 @@ app.use("/payment", paymentController)
 server.listen(process.env.PORT, () => {
   try {
     console.log(`Server is Running on Port ${process.env.PORT}`)
-    mongoose.connect(process.env.DB!)
+    mongoose.connect(ENV!)
     console.log("✅ Database connected")
   } catch (err) {
     if (err instanceof Error)
