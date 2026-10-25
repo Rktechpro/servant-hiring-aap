@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 import path from 'path'
 import mongoose from 'mongoose'
-import express from 'express'
+import express, { Request, Response } from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { authControlller } from './auth/auth.controller'
@@ -43,6 +43,9 @@ app.use("/booking", bookingController)
 app.use("/payment", paymentController)
 
 
+app.get("/",(req:Request,res:Response)=>{
+  res.status(200).json({message:"api is working"})
+})
 
 server.listen(process.env.PORT, () => {
   try {

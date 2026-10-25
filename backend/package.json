@@ -7,9 +7,9 @@
 		"node": "22.x"
 	},
   "scripts": {
-    "dev": "ts-node-dev --transpile-only src/main.ts",
+    "dev": "ts-node-dev --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/main.js"
+    "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "",
