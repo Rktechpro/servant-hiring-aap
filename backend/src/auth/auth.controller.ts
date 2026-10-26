@@ -33,21 +33,21 @@ authControlller.post("/login", async (req: Request, res: Response) => {
             httpOnly: true,
             maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
             secure: process.env.NODE_ENV === "dev" ? false : true,
-            sameSite: 'lax'
+            sameSite: 'none'
         })
 
         res.cookie("refereshToken", userSigIn.refreshToken, {
             httpOnly: true,
             maxAge: Number(process.env.COOKIE_REFERSH_MAX_AGE),
             secure: process.env.NODE_ENV === "dev" ? false : true,
-            sameSite: "lax"
+            sameSite: "none"
         })
 
         res.cookie("role", userSigIn.user.role, {
             httpOnly: true,
             maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
             secure: process.env.NODE_ENV === "dev",
-            sameSite: "lax",
+            sameSite: "none",
         });
 
         res.status(201).json({
