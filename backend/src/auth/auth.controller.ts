@@ -46,7 +46,7 @@ authControlller.post("/login", async (req: Request, res: Response) => {
         res.cookie("role", userSigIn.user.role, {
             httpOnly: true,
             maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
-            secure: process.env.NODE_ENV === "dev",
+            secure: process.env.NODE_ENV === "dev"? false :true,
             sameSite: 'none'
         });
 
