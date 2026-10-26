@@ -47,7 +47,7 @@ authControlller.post("/login", async (req: Request, res: Response) => {
             httpOnly: true,
             maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
             secure: process.env.NODE_ENV === "dev",
-            sameSite: "none",
+            sameSite: 'lax' as const,
         });
 
         res.status(201).json({
