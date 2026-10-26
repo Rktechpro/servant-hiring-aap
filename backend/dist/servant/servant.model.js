@@ -1,10 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Servant = void 0;
-const mongoose_1 = require("mongoose");
-const servantSchema = new mongoose_1.Schema({
+import { Schema, model } from "mongoose";
+const servantSchema = new Schema({
     userId: {
-        type: mongoose_1.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "auth",
         required: true,
         unique: true,
@@ -61,4 +58,4 @@ const servantSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
 });
-exports.Servant = (0, mongoose_1.model)("Servant", servantSchema);
+export const Servant = model("Servant", servantSchema);

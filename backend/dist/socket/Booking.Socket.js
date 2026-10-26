@@ -1,21 +1,15 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIO = void 0;
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const cookie_1 = __importDefault(require("cookie"));
+import jwt from "jsonwebtoken";
+import cookie from "cookie";
 let io;
 const BookingSocket = (server) => {
     io = server;
     io.use((socket, next) => {
         try {
-            const cookies = cookie_1.default.parse(socket.handshake.headers.cookie || "");
+            const cookies = cookie.parse(socket.handshake.headers.cookie || "");
             const token = socket.handshake.auth?.token || cookies.accessToken;
             if (!token)
                 return next(new Error("Unauthorized"));
-            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
             if (!decoded.id)
                 return next(new Error("Invalid user in token"));
             socket.data.userId = String(decoded.id);
@@ -34,11 +28,10 @@ const BookingSocket = (server) => {
         });
     });
 };
-const getIO = () => {
+export const getIO = () => {
     if (!io) {
         throw new Error("Socket.IO is not initialized");
     }
     return io;
 };
-exports.getIO = getIO;
-exports.default = BookingSocket;
+export default BookingSocket;

@@ -1,53 +1,14 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.servantController = void 0;
-const express_1 = require("express");
-const servantService = __importStar(require("./servant.service"));
-const auth_middelware_1 = require("../auth/auth.middelware");
-const servant_dto_1 = require("./servant.dto");
-const mongoose_1 = __importDefault(require("mongoose"));
-const servant_upload_1 = require("./servant.upload");
-const servantSearch_service_1 = require("../Embedding/servantSearch.service");
-const servantEmbedding_service_1 = require("../Embedding/servantEmbedding.service");
-exports.servantController = (0, express_1.Router)();
-exports.servantController.post("/createServant", auth_middelware_1.authMiddleware, async (req, res) => {
-    const session = await mongoose_1.default.startSession();
+import { Router } from "express";
+import * as servantService from './servant.service';
+import { authMiddleware } from "../auth/auth.middelware";
+import { createServantSchema } from "./servant.dto";
+import mongoose from "mongoose";
+import { uploadServantImage } from "./servant.upload";
+import { searchServants } from "../Embedding/servantSearch.service";
+import { updateAllServantEmbeddings } from "../Embedding/servantEmbedding.service";
+export const servantController = Router();
+servantController.post("/createServant", authMiddleware, async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const userId = req.user?.id;
         const body = req.body;
@@ -68,7 +29,7 @@ exports.servantController.post("/createServant", auth_middelware_1.authMiddlewar
         await session.endSession();
     }
 });
-exports.servantController.get("/", auth_middelware_1.authMiddleware, async (req, res) => {
+servantController.get("/", authMiddleware, async (req, res) => {
     try {
         const servant = await servantService.getServant();
         res.status(200).json({ message: "Customer get Data Success! ", data: servant });
@@ -78,15 +39,15 @@ exports.servantController.get("/", auth_middelware_1.authMiddleware, async (req,
             return res.status(500).json({ message: err.message });
     }
 });
-exports.servantController.put("/updateServant", auth_middelware_1.authMiddleware, async (req, res) => {
-    const session = await mongoose_1.default.startSession();
+servantController.put("/updateServant", authMiddleware, async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const userId = req.user?.id;
         const body = req.body;
         session.startTransaction();
         if (!userId)
             return res.status(401).json({ message: "Unauthorized" });
-        const data = servant_dto_1.createServantSchema.parse(body);
+        const data = createServantSchema.parse(body);
         const updateServantData = await servantService.updateDataServant(userId, data, session);
         await session.commitTransaction();
         res.status(200).json({
@@ -103,8 +64,8 @@ exports.servantController.put("/updateServant", auth_middelware_1.authMiddleware
         await session.endSession();
     }
 });
-exports.servantController.delete("/deleteServant", auth_middelware_1.authMiddleware, async (req, res) => {
-    const session = await mongoose_1.default.startSession();
+servantController.delete("/deleteServant", authMiddleware, async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const userId = req.user?.id;
         session.startTransaction();
@@ -154,8 +115,8 @@ exports.servantController.delete("/deleteServant", auth_middelware_1.authMiddlew
 //     }
 // }
 // );
-exports.servantController.put("/imageServantProfile", auth_middelware_1.authMiddleware, servant_upload_1.uploadServantImage.single("image"), async (req, res) => {
-    const session = await mongoose_1.default.startSession();
+servantController.put("/imageServantProfile", authMiddleware, uploadServantImage.single("image"), async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const userId = req.user?.id;
         const file = req.file;
@@ -180,7 +141,7 @@ exports.servantController.put("/imageServantProfile", auth_middelware_1.authMidd
         await session.endSession();
     }
 });
-exports.servantController.get("/semantic-search", async (req, res) => {
+servantController.get("/semantic-search", async (req, res) => {
     try {
         const q = String(req.query.q || "").trim();
         const location = String(req.query.location || "").trim();
@@ -205,7 +166,7 @@ exports.servantController.get("/semantic-search", async (req, res) => {
             available = true;
         if (availableRaw === "false")
             available = false;
-        const data = await (0, servantSearch_service_1.searchServants)({
+        const data = await searchServants({
             q,
             location: location || undefined,
             maxPrice: maxPriceRaw !== undefined
@@ -228,9 +189,9 @@ exports.servantController.get("/semantic-search", async (req, res) => {
         });
     }
 });
-exports.servantController.post("/generate-embeddings", async (_req, res) => {
+servantController.post("/generate-embeddings", async (_req, res) => {
     try {
-        const result = await (0, servantEmbedding_service_1.updateAllServantEmbeddings)();
+        const result = await updateAllServantEmbeddings();
         return res.status(200).json({
             success: true,
             message: "Servant embeddings generated",
