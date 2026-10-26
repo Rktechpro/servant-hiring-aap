@@ -1,32 +1,26 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.razorpayWebhook = exports.createPaymentOrder = void 0;
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
-const crypto_1 = __importDefault(require("crypto"));
-const razorpay_1 = __importDefault(require("razorpay"));
-const booking_model_1 = require("../booking/booking.model");
-const customer_model_1 = require("../customer/customer.model");
-const payment_model_1 = require("./payment.model");
-const payment_enum_1 = require("./payment.enum");
-const razorpay = new razorpay_1.default({
+import dotenv from "dotenv";
+dotenv.config();
+import crypto from "crypto";
+import Razorpay from "razorpay";
+import { Booking } from "../booking/booking.model";
+import { Customer } from "../customer/customer.model";
+import { Payment } from "./payment.model";
+import { PaymentStatus } from "./payment.enum";
+const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
-const createPaymentOrder = async (customerUserId, bookingId) => {
-    const customer = await customer_model_1.Customer.findOne({ userId: customerUserId });
+export const createPaymentOrder = async (customerUserId, bookingId) => {
+    const customer = await Customer.findOne({ userId: customerUserId });
     if (!customer)
         throw new Error("Customer profile not found");
-    const booking = await booking_model_1.Booking.findOne({ _id: bookingId, customerId: customerUserId });
+    const booking = await Booking.findOne({ _id: bookingId, customerId: customerUserId });
     if (!booking)
         throw new Error("Booking not found");
     if (booking.status !== "ACCEPTED")
         throw new Error("Payment is allowed only for accepted bookings");
-    const existingPayment = await payment_model_1.Payment.findOne({ bookingId: booking._id });
-    if (existingPayment?.status === payment_enum_1.PaymentStatus.PAID)
+    const existingPayment = await Payment.findOne({ bookingId: booking._id });
+    if (existingPayment?.status === PaymentStatus.PAID)
         throw new Error("Booking is already paid");
     const amount = Math.round(booking.totalAmount * 100);
     const order = await razorpay.orders.create({
@@ -34,14 +28,14 @@ const createPaymentOrder = async (customerUserId, bookingId) => {
         currency: process.env.CURRENCY,
         receipt: `rec_${booking._id}`,
     });
-    await payment_model_1.Payment.findOneAndUpdate({ bookingId: booking._id }, {
+    await Payment.findOneAndUpdate({ bookingId: booking._id }, {
         $set: {
             bookingId: booking._id,
             customerId: customer._id,
             amount: booking.totalAmount,
             currency: process.env.CURRENCY,
             razorpayOrderId: order.id,
-            status: payment_enum_1.PaymentStatus.PENDING,
+            status: PaymentStatus.PENDING,
         },
     }, {
         upsert: true,
@@ -56,11 +50,10 @@ const createPaymentOrder = async (customerUserId, bookingId) => {
         keyId: process.env.RAZORPAY_KEY_ID,
     };
 };
-exports.createPaymentOrder = createPaymentOrder;
-const razorpayWebhook = async (data, signature) => {
+export const razorpayWebhook = async (data, signature) => {
     console.log("🔥 Razorpay webhook service called");
     // 1. Verify Razorpay webhook signature
-    const expectedSignature = crypto_1.default
+    const expectedSignature = crypto
         .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
         .update(data, "utf8")
         .digest("hex");
@@ -83,9 +76,9 @@ const razorpayWebhook = async (data, signature) => {
             paymentEntity.captured !== true) {
             throw new Error("Payment is not confirmed as captured");
         }
-        const payment = await payment_model_1.Payment.findOneAndUpdate({ razorpayOrderId: orderId }, {
+        const payment = await Payment.findOneAndUpdate({ razorpayOrderId: orderId }, {
             $set: {
-                status: payment_enum_1.PaymentStatus.PAID,
+                status: PaymentStatus.PAID,
                 razorpayPaymentId: paymentEntity.id,
             },
         });
@@ -101,12 +94,12 @@ const razorpayWebhook = async (data, signature) => {
     else if (body.event === "payment.failed") {
         if (!orderId || !paymentEntity?.id)
             throw new Error("Failed payment details missing");
-        const payment = await payment_model_1.Payment.findOneAndUpdate({
+        const payment = await Payment.findOneAndUpdate({
             razorpayOrderId: orderId,
-            status: { $ne: payment_enum_1.PaymentStatus.PAID },
+            status: { $ne: PaymentStatus.PAID },
         }, {
             $set: {
-                status: payment_enum_1.PaymentStatus.FAILED,
+                status: PaymentStatus.FAILED,
                 razorpayPaymentId: paymentEntity.id,
             },
         });
@@ -124,4 +117,3 @@ const razorpayWebhook = async (data, signature) => {
     }
     return body;
 };
-exports.razorpayWebhook = razorpayWebhook;

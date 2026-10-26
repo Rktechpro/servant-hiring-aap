@@ -1,45 +1,9 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.bookingController = void 0;
-const express_1 = require("express");
-const bookingService = __importStar(require("./booking.service"));
-const booking_dto_1 = require("./booking.dto");
-const auth_middelware_1 = require("../auth/auth.middelware");
-exports.bookingController = (0, express_1.Router)();
-exports.bookingController.post("/createBooking", auth_middelware_1.authMiddleware, async (req, res) => {
+import { Router } from "express";
+import * as bookingService from "./booking.service";
+import { createBookingSchema } from "./booking.dto";
+import { authMiddleware } from "../auth/auth.middelware";
+export const bookingController = Router();
+bookingController.post("/createBooking", authMiddleware, async (req, res) => {
     try {
         const customerId = req.user?.id;
         const body = req.body;
@@ -49,7 +13,7 @@ exports.bookingController.post("/createBooking", auth_middelware_1.authMiddlewar
                 message: "Unauthorized",
             });
         }
-        const result = booking_dto_1.createBookingSchema.safeParse(body);
+        const result = createBookingSchema.safeParse(body);
         if (!result.success)
             return res.status(400).json({ errors: result.error.issues, });
         const booking = await bookingService.createBooking(customerId, result.data);
@@ -64,7 +28,7 @@ exports.bookingController.post("/createBooking", auth_middelware_1.authMiddlewar
     }
 });
 // 1.bookings get
-exports.bookingController.get("/my-bookings", auth_middelware_1.authMiddleware, async (req, res) => {
+bookingController.get("/my-bookings", authMiddleware, async (req, res) => {
     try {
         const customerId = req.user?.id;
         const role = req.user?.role;
@@ -86,7 +50,7 @@ exports.bookingController.get("/my-bookings", auth_middelware_1.authMiddleware, 
     }
 });
 // 2. Servant booking requests
-exports.bookingController.get("/AuthRequests", auth_middelware_1.authMiddleware, async (req, res) => {
+bookingController.get("/AuthRequests", authMiddleware, async (req, res) => {
     try {
         const servantId = req.user?.id;
         if (!servantId) {
@@ -107,7 +71,7 @@ exports.bookingController.get("/AuthRequests", auth_middelware_1.authMiddleware,
     }
 });
 // SERVANT - ACCEPT BOOKING
-exports.bookingController.patch("/accept/:id", auth_middelware_1.authMiddleware, async (req, res) => {
+bookingController.patch("/accept/:id", authMiddleware, async (req, res) => {
     try {
         const servantId = req.user?.id;
         if (!servantId) {
@@ -129,7 +93,7 @@ exports.bookingController.patch("/accept/:id", auth_middelware_1.authMiddleware,
     }
 });
 // SERVANT - REJECT BOOKING
-exports.bookingController.patch("/reject/:id", auth_middelware_1.authMiddleware, async (req, res) => {
+bookingController.patch("/reject/:id", authMiddleware, async (req, res) => {
     try {
         const servantId = req.user?.id;
         if (!servantId) {
@@ -151,7 +115,7 @@ exports.bookingController.patch("/reject/:id", auth_middelware_1.authMiddleware,
     }
 });
 // CUSTOMER - CANCEL BOOKING
-exports.bookingController.patch("/cancel/:id", auth_middelware_1.authMiddleware, async (req, res) => {
+bookingController.patch("/cancel/:id", authMiddleware, async (req, res) => {
     try {
         const customerId = req.user?.id;
         if (!customerId) {
@@ -173,7 +137,7 @@ exports.bookingController.patch("/cancel/:id", auth_middelware_1.authMiddleware,
     }
 });
 // SERVANT - COMPLETE BOOKING
-exports.bookingController.patch("/complete/:id", auth_middelware_1.authMiddleware, async (req, res) => {
+bookingController.patch("/complete/:id", authMiddleware, async (req, res) => {
     try {
         const servantId = req.user?.id;
         if (!servantId) {

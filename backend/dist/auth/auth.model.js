@@ -1,13 +1,7 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.authModel = void 0;
-const mongoose_1 = require("mongoose");
-const auth_enum_1 = require("./auth.enum");
-const bcrypt_1 = __importDefault(require("bcrypt"));
-const authSchema = new mongoose_1.Schema({
+import { Schema, model } from "mongoose";
+import { RoleEnum } from "./auth.enum";
+import bcrypt from 'bcrypt';
+const authSchema = new Schema({
     fullname: {
         type: String,
         required: true,
@@ -30,11 +24,11 @@ const authSchema = new mongoose_1.Schema({
     },
     role: {
         type: String,
-        enum: Object.values(auth_enum_1.RoleEnum),
-        default: auth_enum_1.RoleEnum.CUSTOMER
+        enum: Object.values(RoleEnum),
+        default: RoleEnum.CUSTOMER
     }
 }, { timestamps: true });
 authSchema.pre("save", async function () {
-    this.password = (await bcrypt_1.default.hash(this.password, 10)).toString();
+    this.password = (await bcrypt.hash(this.password, 10)).toString();
 });
-exports.authModel = (0, mongoose_1.model)("auth", authSchema);
+export const authModel = model("auth", authSchema);

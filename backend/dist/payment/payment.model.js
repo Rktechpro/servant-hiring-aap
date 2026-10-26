@@ -1,17 +1,14 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Payment = void 0;
-const mongoose_1 = require("mongoose");
-const payment_enum_1 = require("./payment.enum");
-const paymentSchema = new mongoose_1.Schema({
+import { Schema, model } from "mongoose";
+import { PaymentStatus } from "./payment.enum";
+const paymentSchema = new Schema({
     bookingId: {
-        type: mongoose_1.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Booking",
         required: true,
         unique: true,
     },
     customerId: {
-        type: mongoose_1.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Customer",
         required: true,
     },
@@ -37,10 +34,10 @@ const paymentSchema = new mongoose_1.Schema({
     },
     status: {
         type: String,
-        enum: Object.values(payment_enum_1.PaymentStatus),
-        default: payment_enum_1.PaymentStatus.PENDING,
+        enum: Object.values(PaymentStatus),
+        default: PaymentStatus.PENDING,
     },
 }, {
     timestamps: true,
 });
-exports.Payment = (0, mongoose_1.model)("Payment", paymentSchema);
+export const Payment = model("Payment", paymentSchema);

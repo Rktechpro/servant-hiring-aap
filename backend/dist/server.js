@@ -1,46 +1,41 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
-const path_1 = __importDefault(require("path"));
-const mongoose_1 = __importDefault(require("mongoose"));
-const express_1 = __importDefault(require("express"));
-const cookie_parser_1 = __importDefault(require("cookie-parser"));
-const cors_1 = __importDefault(require("cors"));
-const auth_controller_1 = require("./auth/auth.controller");
-const customer_controller_1 = require("./customer/customer.controller");
-const booking_controller_1 = require("./booking/booking.controller");
-const payment_controller_1 = require("./payment/payment.controller");
-const servant_controller_1 = require("./servant/servant.controller");
-const http_1 = require("http");
-const socket_io_1 = require("socket.io");
-const cose_1 = __importDefault(require("./config/cose"));
-const Booking_Socket_1 = __importDefault(require("./socket/Booking.Socket"));
+import dotenv from 'dotenv';
+dotenv.config();
+import path from 'path';
+import mongoose from 'mongoose';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import { authControlller } from './auth/auth.controller';
+import { customerController } from './customer/customer.controller';
+import { bookingController } from './booking/booking.controller';
+import { paymentController } from './payment/payment.controller';
+import { servantController } from './servant/servant.controller';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import CorsConfig from './config/cose';
+import BookingSocket from './socket/Booking.Socket';
 const ENV = `${process.env.MONGO_URL}/${process.env.DB}`;
-const app = (0, express_1.default)();
-const server = (0, http_1.createServer)(app);
-const io = new socket_io_1.Server(server, { cors: cose_1.default });
-(0, Booking_Socket_1.default)(io);
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: false }));
-app.use((0, cookie_parser_1.default)());
-app.use((0, cors_1.default)(cose_1.default));
-app.use("/uploads", express_1.default.static(path_1.default.join(process.cwd(), "uploads")));
-app.use("/auth", auth_controller_1.authControlller);
-app.use("/servant", servant_controller_1.servantController);
-app.use("/customer", customer_controller_1.customerController);
-app.use("/booking", booking_controller_1.bookingController);
-app.use("/payment", payment_controller_1.paymentController);
+const app = express();
+const server = createServer(app);
+const io = new Server(server, { cors: CorsConfig });
+BookingSocket(io);
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(cors(CorsConfig));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/auth", authControlller);
+app.use("/servant", servantController);
+app.use("/customer", customerController);
+app.use("/booking", bookingController);
+app.use("/payment", paymentController);
 app.get("/", (req, res) => {
     res.status(200).json({ message: "api is working" });
 });
 server.listen(process.env.PORT, () => {
     try {
         console.log(`Server is Running on Port ${process.env.PORT}`);
-        mongoose_1.default.connect(ENV);
+        mongoose.connect(ENV);
         console.log("✅ Database connected");
     }
     catch (err) {
@@ -50,6 +45,6 @@ server.listen(process.env.PORT, () => {
 });
 process.on("SIGINT", async () => {
     console.log("Shutdown");
-    await mongoose_1.default.disconnect();
+    await mongoose.disconnect();
     process.exit(0);
 });
