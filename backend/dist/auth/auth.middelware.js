@@ -8,6 +8,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const options = {
     httpOnly: true,
     maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
+    domain: process.env.CLIENT_DOMAIN,
     secure: process.env.NODE_ENV === "dev" ? false : true,
     sameSite: "lax"
 };

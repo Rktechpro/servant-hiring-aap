@@ -2,13 +2,13 @@ import jwt from 'jsonwebtoken'
 import { AuthRequest, authSingupInterface, cookieOptions } from './auth.interface'
 import { NextFunction, Response } from 'express'
 
-export const options = {
-  httpOnly: true,
-  maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
-  secure: true,
-  sameSite: "none" as const,
-  path: "/",
-};
+const options: cookieOptions = {
+    httpOnly: true,
+    maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
+    domain: process.env.CLIENT_DOMAIN,
+    secure: process.env.NODE_ENV === "dev" ? false : true,
+    sameSite: "lax" as const
+}
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
     try {

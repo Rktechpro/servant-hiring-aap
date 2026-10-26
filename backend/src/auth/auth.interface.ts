@@ -17,6 +17,7 @@ export interface AuthRequest extends Request {
 export interface cookieOptions {
     httpOnly: boolean;
     maxAge: number;
+    domain: string | undefined;
     secure: boolean;
     sameSite: "lax" | "strict" | "none";
 }
