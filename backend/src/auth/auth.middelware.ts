@@ -3,12 +3,20 @@ import { AuthRequest, authSingupInterface, cookieOptions } from './auth.interfac
 import { NextFunction, Response } from 'express'
 
 const options: cookieOptions = {
-    httpOnly: true,
-    maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
-    domain: process.env.CLIENT_DOMAIN,
-    secure: process.env.NODE_ENV === "dev" ? false : true,
-    sameSite: "lax" as const
-}
+//     httpOnly: true,
+//     maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
+//     domain: process.env.CLIENT_DOMAIN,
+//     secure: process.env.NODE_ENV === "dev" ? false : true,
+//     sameSite: "lax" as const
+// }
+
+const options: cookieOptions = {
+  httpOnly: true,
+  maxAge: Number(process.env.COOKIE_ACCESS_MAX_AGE),
+  secure: true,
+  sameSite: "none",
+  path: "/",
+};
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
