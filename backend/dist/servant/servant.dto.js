@@ -1,28 +1,25 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createServantSchema = void 0;
-const zod_1 = require("zod");
-exports.createServantSchema = zod_1.z.object({
-    image: zod_1.z
+import { z } from "zod";
+export const createServantSchema = z.object({
+    image: z
         .url("Invalid photo URL")
         .optional(),
-    bio: zod_1.z
+    bio: z
         .string()
         .max(500, "Bio cannot exceed 500 characters")
         .optional(),
-    skills: zod_1.z
-        .array(zod_1.z.string())
+    skills: z
+        .array(z.string())
         .optional(),
-    servantlocation: zod_1.z
+    servantlocation: z
         .string()
         .min(2, "Location is required"),
-    servantAddress: zod_1.z
+    servantAddress: z
         .string()
         .min(2, "Address is required"),
-    hourlyPrice: zod_1.z
+    hourlyPrice: z
         .number()
         .positive("Hourly price must be greater than 0"),
-    availability: zod_1.z
+    availability: z
         .boolean()
         .optional(),
 }).strict();

@@ -1,22 +1,19 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.completeBooking = exports.cancelBooking = exports.rejectBooking = exports.acceptBooking = exports.getBookingRequests = exports.getMyBookings = exports.createBooking = void 0;
-const servant_model_1 = require("../servant/servant.model");
-const customer_model_1 = require("../customer/customer.model");
-const Booking_Socket_1 = require("../socket/Booking.Socket");
-const booking_enum_1 = require("./booking.enum");
-const booking_model_1 = require("./booking.model");
-const mongoose_1 = require("mongoose");
-const auth_model_1 = require("../auth/auth.model");
-const createBooking = async (customerId, data) => {
-    const servant = await servant_model_1.Servant.findOne({ _id: data.servantId, isActive: true });
+import { Servant } from "../servant/servant.model";
+import { Customer } from "../customer/customer.model";
+import { getIO } from "../socket/Booking.Socket";
+import { bookingStatus } from "./booking.enum";
+import { Booking } from "./booking.model";
+import { Types } from "mongoose";
+import { authModel } from "../auth/auth.model";
+export const createBooking = async (customerId, data) => {
+    const servant = await Servant.findOne({ _id: data.servantId, isActive: true });
     if (!servant)
         throw new Error("Servant not found");
     if (!servant.availability)
         throw new Error("Servant is currently unavailable");
     const hourlyPrice = servant.hourlyPrice;
     const totalAmount = data.hours * hourlyPrice;
-    const booking = await booking_model_1.Booking.create({
+    const booking = await Booking.create({
         customerId,
         servantId: servant._id,
         bookingDate: data.bookingDate,
@@ -27,25 +24,24 @@ const createBooking = async (customerId, data) => {
         totalAmount,
         location: servant.servantlocation,
         address: servant.servantAddress,
-        status: booking_enum_1.bookingStatus.PENDING,
+        status: bookingStatus.PENDING,
     });
     // Notify servant after the booking is saved
-    (0, Booking_Socket_1.getIO)()
+    getIO()
         .to(`user:${String(servant.userId)}`)
         .emit("booking:new", {
         booking: booking.toObject(),
     });
     return booking;
 };
-exports.createBooking = createBooking;
-const getMyBookings = async (userId, role) => {
+export const getMyBookings = async (userId, role) => {
     let match;
     if (role === "CUSTOMER") {
-        match = { customerId: new mongoose_1.Types.ObjectId(userId) };
+        match = { customerId: new Types.ObjectId(userId) };
     }
     else if (role === "SERVANT") {
-        const servant = await servant_model_1.Servant.findOne({
-            userId: new mongoose_1.Types.ObjectId(userId),
+        const servant = await Servant.findOne({
+            userId: new Types.ObjectId(userId),
         });
         if (!servant) {
             throw new Error("Servant not found");
@@ -55,12 +51,12 @@ const getMyBookings = async (userId, role) => {
     else {
         throw new Error("Invalid role");
     }
-    return booking_model_1.Booking.aggregate([
+    return Booking.aggregate([
         { $match: match },
         // Customer fullname and mobile
         {
             $lookup: {
-                from: customer_model_1.Customer.collection.name,
+                from: Customer.collection.name,
                 let: { bookingCustomerId: "$customerId" },
                 pipeline: [
                     {
@@ -75,7 +71,7 @@ const getMyBookings = async (userId, role) => {
                     },
                     {
                         $lookup: {
-                            from: auth_model_1.authModel.collection.name,
+                            from: authModel.collection.name,
                             localField: "userId",
                             foreignField: "_id",
                             as: "user",
@@ -108,7 +104,7 @@ const getMyBookings = async (userId, role) => {
         // Servant profile data
         {
             $lookup: {
-                from: servant_model_1.Servant.collection.name,
+                from: Servant.collection.name,
                 localField: "servantId",
                 foreignField: "_id",
                 as: "servant",
@@ -123,7 +119,7 @@ const getMyBookings = async (userId, role) => {
         // Servant fullname and mobile from auth collection
         {
             $lookup: {
-                from: auth_model_1.authModel.collection.name,
+                from: authModel.collection.name,
                 let: { servantUserId: "$servant.userId" },
                 pipeline: [
                     {
@@ -192,43 +188,41 @@ const getMyBookings = async (userId, role) => {
         },
     ]);
 };
-exports.getMyBookings = getMyBookings;
-const getBookingRequests = async (servantUserId) => {
+export const getBookingRequests = async (servantUserId) => {
     // Logged-in User ID se Servant document find karo
-    const servant = await servant_model_1.Servant.findOne({
+    const servant = await Servant.findOne({
         userId: servantUserId,
     });
     if (!servant) {
         throw new Error("Servant profile not found for this user");
     }
     // Booking mein Servant document ki _id use hoti hai
-    return booking_model_1.Booking.find({
+    return Booking.find({
         servantId: servant._id,
-        status: booking_enum_1.bookingStatus.PENDING,
+        status: bookingStatus.PENDING,
     })
         .populate("customerId")
         .sort({ createdAt: -1 });
 };
-exports.getBookingRequests = getBookingRequests;
 // Helper: notify the customer who created the booking
 const notifyCustomer = async (customerId, bookingId, status) => {
     // Assumes Booking.customerId references a Customer document
     // and Customer.userId references the authenticated User.
-    const customer = await customer_model_1.Customer.findById(customerId).select("userId");
+    const customer = await Customer.findById(customerId).select("userId");
     if (!customer?.userId) {
         console.error("Customer userId not found for booking:", bookingId);
         return;
     }
-    const message = status === booking_enum_1.bookingStatus.ACCEPTED
+    const message = status === bookingStatus.ACCEPTED
         ? "Your booking has been accepted by the servant."
-        : status === booking_enum_1.bookingStatus.REJECTED
+        : status === bookingStatus.REJECTED
             ? "Your booking has been rejected by the servant."
-            : status === booking_enum_1.bookingStatus.CANCELLED
+            : status === bookingStatus.CANCELLED
                 ? "Your booking has been cancelled."
-                : status === booking_enum_1.bookingStatus.COMPLETED
+                : status === bookingStatus.COMPLETED
                     ? "Your booking has been completed."
                     : `Your booking status is ${status}.`;
-    (0, Booking_Socket_1.getIO)()
+    getIO()
         .to(`user:${String(customer.userId)}`)
         .emit("booking:status", {
         bookingId,
@@ -237,19 +231,19 @@ const notifyCustomer = async (customerId, bookingId, status) => {
     });
 };
 // SERVANT - ACCEPT BOOKING
-const acceptBooking = async (bookingId, servantUserId) => {
-    const servant = await servant_model_1.Servant.findOne({
+export const acceptBooking = async (bookingId, servantUserId) => {
+    const servant = await Servant.findOne({
         userId: servantUserId,
     });
     if (!servant) {
         throw new Error("Servant profile not found");
     }
-    const booking = await booking_model_1.Booking.findOneAndUpdate({
+    const booking = await Booking.findOneAndUpdate({
         _id: bookingId,
         servantId: servant._id,
-        status: booking_enum_1.bookingStatus.PENDING,
+        status: bookingStatus.PENDING,
     }, {
-        $set: { status: booking_enum_1.bookingStatus.ACCEPTED },
+        $set: { status: bookingStatus.ACCEPTED },
     }, {
         returnDocument: "after",
         runValidators: true,
@@ -259,21 +253,20 @@ const acceptBooking = async (bookingId, servantUserId) => {
     }
     return booking;
 };
-exports.acceptBooking = acceptBooking;
 // SERVANT - REJECT BOOKING
-const rejectBooking = async (bookingId, servantUserId) => {
-    const servant = await servant_model_1.Servant.findOne({
+export const rejectBooking = async (bookingId, servantUserId) => {
+    const servant = await Servant.findOne({
         userId: servantUserId,
     });
     if (!servant) {
         throw new Error("Servant profile not found");
     }
-    const booking = await booking_model_1.Booking.findOneAndUpdate({
+    const booking = await Booking.findOneAndUpdate({
         _id: bookingId,
         servantId: servant._id,
-        status: booking_enum_1.bookingStatus.PENDING,
+        status: bookingStatus.PENDING,
     }, {
-        $set: { status: booking_enum_1.bookingStatus.REJECTED },
+        $set: { status: bookingStatus.REJECTED },
     }, {
         returnDocument: "after",
         runValidators: true,
@@ -283,21 +276,20 @@ const rejectBooking = async (bookingId, servantUserId) => {
     }
     return booking;
 };
-exports.rejectBooking = rejectBooking;
 // CUSTOMER - CANCEL BOOKING
-const cancelBooking = async (bookingId, customerId) => {
-    const booking = await booking_model_1.Booking.findOneAndUpdate({
+export const cancelBooking = async (bookingId, customerId) => {
+    const booking = await Booking.findOneAndUpdate({
         _id: bookingId,
         customerId,
         status: {
             $in: [
-                booking_enum_1.bookingStatus.PENDING,
-                booking_enum_1.bookingStatus.ACCEPTED,
+                bookingStatus.PENDING,
+                bookingStatus.ACCEPTED,
             ],
         },
     }, {
         $set: {
-            status: booking_enum_1.bookingStatus.CANCELLED,
+            status: bookingStatus.CANCELLED,
         },
     }, {
         returnDocument: "after",
@@ -307,29 +299,28 @@ const cancelBooking = async (bookingId, customerId) => {
         throw new Error("Booking not found or cannot be cancelled");
     }
     // Notify the servant about cancellation
-    const servant = await servant_model_1.Servant.findById(booking.servantId)
+    const servant = await Servant.findById(booking.servantId)
         .select("userId");
     if (servant?.userId) {
-        (0, Booking_Socket_1.getIO)()
+        getIO()
             .to(`user:${String(servant.userId)}`)
             .emit("booking:status", {
             bookingId: String(booking._id),
-            status: booking_enum_1.bookingStatus.CANCELLED,
+            status: bookingStatus.CANCELLED,
             message: "The customer has cancelled this booking.",
         });
     }
     return booking;
 };
-exports.cancelBooking = cancelBooking;
 // SERVANT - COMPLETE BOOKING
-const completeBooking = async (bookingId, servantId) => {
-    const booking = await booking_model_1.Booking.findOneAndUpdate({
+export const completeBooking = async (bookingId, servantId) => {
+    const booking = await Booking.findOneAndUpdate({
         _id: bookingId,
         servantId,
-        status: booking_enum_1.bookingStatus.ACCEPTED,
+        status: bookingStatus.ACCEPTED,
     }, {
         $set: {
-            status: booking_enum_1.bookingStatus.COMPLETED,
+            status: bookingStatus.COMPLETED,
         },
     }, {
         returnDocument: "after",
@@ -338,7 +329,6 @@ const completeBooking = async (bookingId, servantId) => {
     if (!booking) {
         throw new Error("Booking not found or cannot be completed");
     }
-    await notifyCustomer(String(booking.customerId), String(booking._id), booking_enum_1.bookingStatus.COMPLETED);
+    await notifyCustomer(String(booking.customerId), String(booking._id), bookingStatus.COMPLETED);
     return booking;
 };
-exports.completeBooking = completeBooking;

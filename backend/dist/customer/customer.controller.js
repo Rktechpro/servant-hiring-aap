@@ -1,50 +1,11 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.customerController = void 0;
-const express_1 = require("express");
-const auth_middelware_1 = require("../auth/auth.middelware");
-const customerService = __importStar(require("./customer.service"));
-const mongoose_1 = __importDefault(require("mongoose"));
-const customer_upload_1 = require("./customer.upload");
-exports.customerController = (0, express_1.Router)();
-exports.customerController.post("/createCustomer", auth_middelware_1.authMiddleware, async (req, res) => {
-    const session = await mongoose_1.default.startSession();
+import { Router } from "express";
+import { authMiddleware } from "../auth/auth.middelware";
+import * as customerService from './customer.service';
+import mongoose from "mongoose";
+import { uploadCustomerImage } from "./customer.upload";
+export const customerController = Router();
+customerController.post("/createCustomer", authMiddleware, async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const userId = req.user?.id;
         const body = req.body;
@@ -64,7 +25,7 @@ exports.customerController.post("/createCustomer", auth_middelware_1.authMiddlew
         await session.endSession();
     }
 });
-exports.customerController.get("/", auth_middelware_1.authMiddleware, async (req, res) => {
+customerController.get("/", authMiddleware, async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId)
@@ -77,8 +38,8 @@ exports.customerController.get("/", auth_middelware_1.authMiddleware, async (req
             res.status(500).json({ message: err.message });
     }
 });
-exports.customerController.put("/updateCustomer", auth_middelware_1.authMiddleware, async (req, res) => {
-    const session = await mongoose_1.default.startSession();
+customerController.put("/updateCustomer", authMiddleware, async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const userId = req.user?.id;
         const body = req.body;
@@ -98,8 +59,8 @@ exports.customerController.put("/updateCustomer", auth_middelware_1.authMiddlewa
         await session.endSession();
     }
 });
-exports.customerController.delete("/deleteCustomer", auth_middelware_1.authMiddleware, async (req, res) => {
-    const session = await mongoose_1.default.startSession();
+customerController.delete("/deleteCustomer", authMiddleware, async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const userId = req.user?.id;
         if (!userId) {
@@ -154,8 +115,8 @@ exports.customerController.delete("/deleteCustomer", auth_middelware_1.authMiddl
 //     }
 // }
 // );
-exports.customerController.put("/updateImageProfile", auth_middelware_1.authMiddleware, customer_upload_1.uploadCustomerImage.single("image"), async (req, res) => {
-    const session = await mongoose_1.default.startSession();
+customerController.put("/updateImageProfile", authMiddleware, uploadCustomerImage.single("image"), async (req, res) => {
+    const session = await mongoose.startSession();
     try {
         const userId = req.user?.id;
         const file = req.file;

@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.searchServants = void 0;
-const servant_model_1 = require("../servant/servant.model");
-const servantEmbedding_service_1 = require("./servantEmbedding.service");
+import { Servant } from "../servant/servant.model";
+import { generateEmbedding } from "./servantEmbedding.service";
 const cosineSimilarity = (a, b) => {
     if (!a.length || a.length !== b.length)
         return 0;
@@ -29,7 +26,7 @@ const keywordScore = (query, text) => {
     const matched = words.filter((word) => searchable.includes(word)).length;
     return matched / words.length;
 };
-const searchServants = async (options) => {
+export const searchServants = async (options) => {
     const { q, location, maxPrice, available, limit = 20 } = options;
     const mongoFilter = { isActive: true };
     if (location?.trim()) {
@@ -42,14 +39,14 @@ const searchServants = async (options) => {
         mongoFilter.hourlyPrice = { $lte: maxPrice };
     }
     // Load the saved vector explicitly because the schema uses select:false.
-    const servants = await servant_model_1.Servant.find(mongoFilter)
+    const servants = await Servant.find(mongoFilter)
         .select("+embedding +embeddingText +embeddingModel")
         .limit(500)
         .lean();
     if (!servants.length)
         return [];
     const queryVector = q.trim()
-        ? await (0, servantEmbedding_service_1.generateEmbedding)(q.trim())
+        ? await generateEmbedding(q.trim())
         : null;
     const results = servants
         .filter((servant) => {
@@ -89,4 +86,3 @@ const searchServants = async (options) => {
         .slice(0, Math.min(Math.max(limit, 1), 50));
     return results;
 };
-exports.searchServants = searchServants;
