@@ -6,7 +6,6 @@ import express, { Request, Response } from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { authControlller } from './auth/auth.controller'
-import { storeController } from './store/store.controller'
 import { customerController } from './customer/customer.controller'
 import { bookingController } from './booking/booking.controller'
 import { paymentController } from './payment/payment.controller'
@@ -36,7 +35,6 @@ app.use("/uploads",
 );
 
 app.use("/auth", authControlller)
-app.use("/storage", storeController)
 app.use("/servant", servantController)
 app.use("/customer", customerController)
 app.use("/booking", bookingController)
